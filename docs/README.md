@@ -1,6 +1,6 @@
 # Tài liệu dự án ERP / ERP Project Documentation
 
-> **Phiên bản / Version:** 0.2 — Bản nháp / Draft
+> **Phiên bản / Version:** 0.3 — Bản nháp / Draft
 > **Ngày / Date:** 2026-10-05
 > **Trạng thái / Status:** Chờ các bên liên quan xem xét / Pending stakeholder review
 
@@ -15,17 +15,17 @@ Bilingual **(Vietnamese / English)** requirements specification for the ERP syst
 | # | Tài liệu / Document | Mã / Code | Giai đoạn / Phase |
 |---|---|---|---|
 | 00 | [Tổng quan dự án / Project overview](requirements/00-overview.md) | — | — |
-| 01 | [Vai trò & phân quyền / Roles & permissions](requirements/01-roles-permissions.md) | ROL | P1 |
-| 02 | [Quản trị hệ thống / System administration](requirements/02-system-administration.md) | SYS | P1 |
-| 03 | [Dữ liệu danh mục / Master data](requirements/03-master-data.md) | MDM | P1 |
-| 04 | [Bán hàng / Sales](requirements/04-sales.md) | SAL | P1 |
-| 05 | [Mua hàng / Purchasing](requirements/05-purchasing.md) | PUR | P1 |
-| 06 | [Kho / Inventory](requirements/06-inventory.md) | INV | P1 |
-| 07 | [Kế toán – Tài chính / Accounting & Finance](requirements/07-accounting-finance.md) | ACC | P1 (TSCĐ/FA: P2) |
-| 08 | [Nhân sự – Tiền lương / HR & Payroll](requirements/08-hr-payroll.md) | HRM | P2 |
-| 09 | [Quản lý quan hệ khách hàng / CRM](requirements/09-crm.md) | CRM | P2 |
-| 10 | [Báo cáo & Dashboard / Reporting & Dashboards](requirements/10-reporting.md) | RPT | P1 – P3 |
-| 11 | [Tích hợp / Integrations](requirements/11-integrations.md) | INT | P1 – P3 |
+| 01 | [Vai trò & phân quyền / Roles & permissions](requirements/01-roles-permissions.md) | ROL | P1 – P2 |
+| 02 | [Quản trị hệ thống / System administration](requirements/02-system-administration.md) | SYS | P1 – P4 |
+| 03 | [Dữ liệu danh mục / Master data](requirements/03-master-data.md) | MDM | P1 – P4 |
+| 04 | [Bán hàng / Sales](requirements/04-sales.md) | SAL | P1 – P4 |
+| 05 | [Mua hàng / Purchasing](requirements/05-purchasing.md) | PUR | P1 – P4 |
+| 06 | [Kho / Inventory](requirements/06-inventory.md) | INV | P1 – P4 |
+| 07 | [Kế toán – Tài chính / Accounting & Finance](requirements/07-accounting-finance.md) | ACC | P1 – P4 |
+| 08 | [Nhân sự – Tiền lương / HR & Payroll](requirements/08-hr-payroll.md) | HRM | P3 – P4 |
+| 09 | [Quản lý quan hệ khách hàng / CRM](requirements/09-crm.md) | CRM | P3 – P4 |
+| 10 | [Báo cáo & Dashboard / Reporting & Dashboards](requirements/10-reporting.md) | RPT | P1 – P4 |
+| 11 | [Tích hợp / Integrations](requirements/11-integrations.md) | INT | P1 – P4 |
 | 12 | [Yêu cầu phi chức năng / Non-functional requirements](requirements/12-non-functional.md) | NFR | P1 |
 | 13 | [Thuật ngữ / Glossary](requirements/13-glossary.md) | — | — |
 
@@ -61,9 +61,13 @@ Issued IDs are **never reused**. Removed requirements are marked ~~struck throug
 
 | Mã / Code | Giai đoạn (VI) | Phase (EN) |
 |---|---|---|
-| `P1` | MVP — vận hành cốt lõi: mua hàng, bán hàng, kho, kế toán | MVP — core operations: purchasing, sales, inventory, accounting |
-| `P2` | Mở rộng — nhân sự & tiền lương, CRM, tài sản cố định, dashboard nâng cao | Expansion — HR & payroll, CRM, fixed assets, advanced dashboards |
-| `P3` | Tối ưu & tích hợp — sàn TMĐT, vận chuyển, Open API ngân hàng, BI | Optimization & integration — marketplaces, carriers, bank Open API, BI |
+| `P1` | Cơ bản (MVP) — luồng mua hàng, bán hàng, kho, công nợ, thu chi ở mức tối thiểu | Basic (MVP) — minimal purchasing, sales, inventory, AR/AP and cash flows |
+| `P2` | Hoàn thiện — kế toán đầy đủ, kiểm soát (luồng duyệt, phạm vi dữ liệu, hạn mức), tích hợp HĐĐT | Completion — full accounting, controls (approval flows, data scope, limits), e-invoice integration |
+| `P3` | Mở rộng — nhân sự & tiền lương, CRM, tài sản cố định, khuyến mãi, dashboard nâng cao | Expansion — HR & payroll, CRM, fixed assets, promotions, advanced dashboards |
+| `P4` | Nâng cao — sàn TMĐT, vận chuyển, Open API ngân hàng, BI và các tính năng "có thì tốt" | Advanced — marketplaces, carriers, bank Open API, BI and nice-to-have features |
+
+- **VI:** Trong mỗi tài liệu phân hệ, mục Yêu cầu chức năng mở đầu bằng bảng tóm tắt theo giai đoạn, sau đó các yêu cầu được nhóm theo giai đoạn. Yêu cầu làm dạng đơn giản trước được ghi `Must` · `P1` (mở rộng / extended: `P2`); phần mở rộng nằm trong bảng "Mở rộng yêu cầu của giai đoạn trước" của giai đoạn đó.
+- **EN:** In each module document, the Functional requirements section opens with a per-phase summary table, then groups requirements by phase. A requirement delivered in a simple form first is tagged `Must` · `P1` (mở rộng / extended: `P2`); the extension is listed in the "Extensions to earlier-phase requirements" table of that phase.
 
 ### Cách đọc một yêu cầu / How to read a requirement
 

@@ -9,67 +9,73 @@
 - **VI:** Hệ thống áp dụng phân quyền theo vai trò (RBAC) kết hợp phạm vi dữ liệu. Một người dùng có thể có nhiều vai trò; quyền hiệu lực là hợp của quyền các vai trò. Mọi kiểm tra quyền phải được thực hiện ở phía máy chủ.
 - **EN:** The system uses role-based access control (RBAC) combined with data scope. A user may hold several roles; effective permissions are the union of all role permissions. All permission checks must be enforced server-side.
 
-| Thành phần (VI) | Component (EN) | Giá trị / Values |
-|---|---|---|
-| Chức năng | Function | Màn hình / nghiệp vụ, ví dụ "Đơn bán hàng" / Screen or business function, e.g. "Sales order" |
-| Hành động | Action | Xem / View · Tạo / Create · Sửa / Edit · Xóa / Delete · Duyệt / Approve · Hủy / Cancel · In / Print · Xuất / Export · Nhập / Import |
-| Phạm vi dữ liệu | Data scope | Của tôi / Own · Phòng ban / Department · Chi nhánh / Branch · Kho, quỹ được gán / Assigned · Toàn công ty / All |
-| Hạn mức | Limits | Chiết khấu tối đa, giá trị duyệt tối đa… / Max discount, max approval amount… |
-| Quyền theo trường | Field-level | Ẩn giá vốn, lãi gộp, lương… / Hide cost, gross margin, salary… |
+| Thành phần (VI) | Component (EN) | Giá trị / Values | Giai đoạn / Phase |
+|---|---|---|---|
+| Chức năng | Function | Màn hình / nghiệp vụ, ví dụ "Đơn bán hàng" / Screen or business function, e.g. "Sales order" | P1 |
+| Hành động | Action | Xem / View · Tạo / Create · Sửa / Edit · Xóa / Delete · Duyệt / Approve · Hủy / Cancel · In / Print · Xuất / Export · Nhập / Import | P1 |
+| Phạm vi dữ liệu | Data scope | Của tôi / Own · Toàn công ty / All (P1) · Phòng ban / Department · Chi nhánh / Branch · Kho, quỹ được gán / Assigned (P2) | P1 – P2 |
+| Hạn mức | Limits | Chiết khấu tối đa, giá trị duyệt tối đa… / Max discount, max approval amount… | P2 |
+| Quyền theo trường | Field-level | Ẩn giá vốn, lãi gộp, lương… / Hide cost, gross margin, salary… | P2 |
+
+- **VI:** P1 chỉ cần ma trận chức năng × hành động và hai phạm vi Của tôi / Toàn công ty. Các phạm vi còn lại, hạn mức, quyền theo trường và quy tắc phân tách nhiệm vụ bổ sung ở P2.
+- **EN:** P1 only needs the function × action matrix and the two scopes Own / All. The remaining scopes, limits, field-level permissions and segregation-of-duties rules are added in P2.
 
 ## 2. Danh sách vai trò mặc định / Default roles
 
-| Mã / Code | Vai trò (VI) | Role (EN) | Phạm vi mặc định / Default scope |
-|---|---|---|---|
-| `ADM` | Quản trị hệ thống | System administrator | Toàn công ty (chỉ cấu hình) / All (configuration only) |
-| `CEO` | Ban giám đốc | Executive | Toàn công ty / All |
-| `SAL` | Nhân viên kinh doanh | Sales staff | Của tôi / Own |
-| `SLM` | Trưởng phòng kinh doanh | Sales manager | Phòng ban hoặc chi nhánh / Department or branch |
-| `PUR` | Nhân viên mua hàng | Purchasing staff | Phòng ban / Department |
-| `PUM` | Trưởng phòng mua hàng | Purchasing manager | Toàn công ty / All |
-| `WH` | Thủ kho | Warehouse keeper | Kho được gán / Assigned warehouses |
-| `WHM` | Quản lý kho | Warehouse manager | Chi nhánh / Branch |
-| `ACC` | Kế toán viên | Accountant | Toàn công ty / All |
-| `CAC` | Kế toán trưởng | Chief accountant | Toàn công ty / All |
-| `CSH` | Thủ quỹ | Cashier | Quỹ được gán / Assigned cash funds |
-| `HR` | Nhân viên nhân sự | HR staff | Toàn công ty / All |
-| `HRM` | Trưởng phòng nhân sự | HR manager | Toàn công ty / All |
-| `EMP` | Nhân viên (tự phục vụ) | Employee (self-service) | Của tôi / Own |
-| `AUD` | Kiểm soát / Kiểm toán (chỉ xem) | Auditor (read-only) | Toàn công ty / All |
+| Mã / Code | Vai trò (VI) | Role (EN) | Phạm vi mặc định / Default scope | Giai đoạn / Phase |
+|---|---|---|---|---|
+| `ADM` | Quản trị hệ thống | System administrator | Toàn công ty (chỉ cấu hình) / All (configuration only) | P1 |
+| `CEO` | Ban giám đốc | Executive | Toàn công ty / All | P1 |
+| `SAL` | Nhân viên kinh doanh | Sales staff | Của tôi / Own | P1 |
+| `SLM` | Trưởng phòng kinh doanh | Sales manager | Phòng ban hoặc chi nhánh / Department or branch | P1 |
+| `PUR` | Nhân viên mua hàng | Purchasing staff | Phòng ban / Department | P1 |
+| `PUM` | Trưởng phòng mua hàng | Purchasing manager | Toàn công ty / All | P1 |
+| `WH` | Thủ kho | Warehouse keeper | Kho được gán / Assigned warehouses | P1 |
+| `WHM` | Quản lý kho | Warehouse manager | Chi nhánh / Branch | P1 |
+| `ACC` | Kế toán viên | Accountant | Toàn công ty / All | P1 |
+| `CAC` | Kế toán trưởng | Chief accountant | Toàn công ty / All | P1 |
+| `CSH` | Thủ quỹ | Cashier | Quỹ được gán / Assigned cash funds | P1 |
+| `HR` | Nhân viên nhân sự | HR staff | Toàn công ty / All | P3 |
+| `HRM` | Trưởng phòng nhân sự | HR manager | Toàn công ty / All | P3 |
+| `EMP` | Nhân viên (tự phục vụ) | Employee (self-service) | Của tôi / Own | P2 |
+| `AUD` | Kiểm soát / Kiểm toán (chỉ xem) | Auditor (read-only) | Toàn công ty / All | P1 |
+
+- **VI:** Trong P1 chỉ có phạm vi Của tôi và Toàn công ty; các vai trò có phạm vi mặc định là phòng ban, chi nhánh hoặc kho / quỹ được gán dùng Toàn công ty cho đến P2.
+- **EN:** P1 only has the Own and All scopes; roles whose default scope is department, branch or assigned warehouses / cash funds use All until P2.
 
 ## 3. Ma trận phân quyền mặc định / Default permission matrix
 
 Ký hiệu / Legend: `V` Xem / View · `C` Tạo / Create · `E` Sửa / Edit · `D` Xóa / Delete · `A` Duyệt / Approve · `—` Không / None
 
-| Chức năng / Function | ADM | CEO | SAL | SLM | PUR | PUM | WH | WHM | ACC | CAC | CSH | HR | HRM | AUD |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Người dùng & vai trò / Users & roles | VCED | — | — | — | — | — | — | — | — | — | — | — | — | V |
-| Cấu hình hệ thống / System settings | VCE | V | — | — | — | — | — | — | — | V | — | — | — | V |
-| Nhật ký hệ thống / Audit log | V | V | — | — | — | — | — | — | — | V | — | — | — | V |
-| Sản phẩm / Products | V | V | V | V | VCE | VCEA | V | VCE | V | VE | — | — | — | V |
-| Khách hàng / Customers | — | V | VCE | VCEA | — | — | — | — | V | VE | V | — | — | V |
-| Nhà cung cấp / Suppliers | — | V | — | — | VCE | VCEA | — | — | V | VE | V | — | — | V |
-| Bảng giá bán / Price lists | — | VA | V | VCE | — | — | — | — | V | V | — | — | — | V |
-| Báo giá / Quotations | — | V | VCE | VCEDA | — | — | — | — | — | — | — | — | — | V |
-| Đơn bán hàng / Sales orders | — | VA | VCE | VCEDA | — | — | V | V | V | V | — | — | — | V |
-| Trả hàng bán / Sales returns | — | V | VC | VCEA | — | — | V | V | V | VA | — | — | — | V |
-| Đề nghị mua hàng / Purchase requests | — | VA | VC | VC | VCE | VCEA | VC | VC | VC | VC | — | VC | VC | V |
-| Đơn mua hàng / Purchase orders | — | VA | — | — | VCE | VCEDA | V | V | V | V | — | — | — | V |
-| Nhập / xuất / chuyển kho / Receipts, issues, transfers | — | V | — | — | V | V | VCE | VCEDA | V | V | — | — | — | V |
-| Kiểm kê / Stock count | — | V | — | — | — | — | VCE | VCEA | V | VA | — | — | — | V |
-| Hóa đơn bán / Customer invoices | — | V | V | V | — | — | — | — | VCE | VCEDA | — | — | — | V |
-| Hóa đơn mua / Vendor bills | — | V | — | — | V | V | — | — | VCE | VCEDA | — | — | — | V |
-| Phiếu thu / chi tiền mặt / Cash receipts & payments | — | VA | — | — | — | — | — | — | VCE | VCEDA | VCE | — | — | V |
-| Giao dịch ngân hàng / Bank transactions | — | VA | — | — | — | — | — | — | VCE | VCEDA | — | — | — | V |
-| Bút toán thủ công / Manual journal entries | — | — | — | — | — | — | — | — | VCE | VCEDA | — | — | — | V |
-| Khóa sổ kỳ / Period close | — | V | — | — | — | — | — | — | — | VA | — | — | — | V |
-| Báo cáo tài chính / Financial statements | — | V | — | — | — | — | — | — | V | V | — | — | — | V |
-| Hồ sơ nhân sự / Employee records | — | V | — | — | — | — | — | — | — | — | — | VCE | VCEDA | — |
-| Bảng lương / Payroll | — | VA | — | — | — | — | — | — | V | V | — | VCE | VCEA | — |
-| Dashboard điều hành / Executive dashboard | — | V | — | — | — | — | — | — | — | V | — | — | — | — |
+| Chức năng / Function | Giai đoạn / Phase | ADM | CEO | SAL | SLM | PUR | PUM | WH | WHM | ACC | CAC | CSH | HR | HRM | AUD |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Người dùng & vai trò / Users & roles | P1 | VCED | — | — | — | — | — | — | — | — | — | — | — | — | V |
+| Cấu hình hệ thống / System settings | P1 | VCE | V | — | — | — | — | — | — | — | V | — | — | — | V |
+| Nhật ký hệ thống / Audit log | P1 | V | V | — | — | — | — | — | — | — | V | — | — | — | V |
+| Sản phẩm / Products | P1 | V | V | V | V | VCE | VCEA | V | VCE | V | VE | — | — | — | V |
+| Khách hàng / Customers | P1 | — | V | VCE | VCEA | — | — | — | — | V | VE | V | — | — | V |
+| Nhà cung cấp / Suppliers | P1 | — | V | — | — | VCE | VCEA | — | — | V | VE | V | — | — | V |
+| Bảng giá bán / Price lists | P1 | — | VA | V | VCE | — | — | — | — | V | V | — | — | — | V |
+| Báo giá / Quotations | P1 | — | V | VCE | VCEDA | — | — | — | — | — | — | — | — | — | V |
+| Đơn bán hàng / Sales orders | P1 | — | VA | VCE | VCEDA | — | — | V | V | V | V | — | — | — | V |
+| Trả hàng bán / Sales returns | P1 | — | V | VC | VCEA | — | — | V | V | V | VA | — | — | — | V |
+| Đề nghị mua hàng / Purchase requests | P2 | — | VA | VC | VC | VCE | VCEA | VC | VC | VC | VC | — | VC | VC | V |
+| Đơn mua hàng / Purchase orders | P1 | — | VA | — | — | VCE | VCEDA | V | V | V | V | — | — | — | V |
+| Nhập / xuất / chuyển kho / Receipts, issues, transfers | P1 | — | V | — | — | V | V | VCE | VCEDA | V | V | — | — | — | V |
+| Kiểm kê / Stock count | P1 | — | V | — | — | — | — | VCE | VCEA | V | VA | — | — | — | V |
+| Hóa đơn bán / Customer invoices | P1 | — | V | V | V | — | — | — | — | VCE | VCEDA | — | — | — | V |
+| Hóa đơn mua / Vendor bills | P1 | — | V | — | — | V | V | — | — | VCE | VCEDA | — | — | — | V |
+| Phiếu thu / chi tiền mặt / Cash receipts & payments | P1 | — | VA | — | — | — | — | — | — | VCE | VCEDA | VCE | — | — | V |
+| Giao dịch ngân hàng / Bank transactions | P1 | — | VA | — | — | — | — | — | — | VCE | VCEDA | — | — | — | V |
+| Bút toán thủ công / Manual journal entries | P2 | — | — | — | — | — | — | — | — | VCE | VCEDA | — | — | — | V |
+| Khóa sổ kỳ / Period close | P2 | — | V | — | — | — | — | — | — | — | VA | — | — | — | V |
+| Báo cáo tài chính / Financial statements | P2 | — | V | — | — | — | — | — | — | V | V | — | — | — | V |
+| Hồ sơ nhân sự / Employee records | P3 | — | V | — | — | — | — | — | — | — | — | — | VCE | VCEDA | — |
+| Bảng lương / Payroll | P3 | — | VA | — | — | — | — | — | — | V | V | — | VCE | VCEA | — |
+| Dashboard điều hành / Executive dashboard | P2 | — | V | — | — | — | — | — | — | — | V | — | — | — | — |
 
-- **VI:** Ma trận trên là cấu hình mặc định khi khởi tạo; quản trị viên có thể thay đổi. Vai trò `EMP` chỉ truy cập cổng tự phục vụ (P2) và tạo đề nghị mua hàng / tạm ứng.
-- **EN:** The matrix above is the initial default configuration; administrators can change it. The `EMP` role only accesses the self-service portal (P2) and can create purchase requests / advance requests.
+- **VI:** Ma trận trên là cấu hình mặc định khi khởi tạo; quản trị viên có thể thay đổi. Cột Giai đoạn cho biết chức năng có từ giai đoạn nào. Vai trò `EMP` chỉ truy cập cổng tự phục vụ (P4) và tạo đề nghị mua hàng / tạm ứng.
+- **EN:** The matrix above is the initial default configuration; administrators can change it. The Phase column shows when each function becomes available. The `EMP` role only accesses the self-service portal (P4) and can create purchase requests / advance requests.
 
 ## 4. Quy tắc phân tách nhiệm vụ / Segregation-of-duties rules
 
@@ -80,13 +86,13 @@ Ký hiệu / Legend: `V` Xem / View · `C` Tạo / Create · `E` Sửa / Edit ·
 - **EN:** The creator of a document cannot approve that same document, even if they hold the approve permission.
 
 #### BR-ROL-002 · Tách thủ quỹ và ghi sổ / Separate cash handling and posting
-`Must` · `P1`
+`Must` · `P2`
 
 - **VI:** Thủ quỹ không được tạo hoặc sửa bút toán sổ cái và không được duyệt phiếu chi.
 - **EN:** Cashiers cannot create or edit GL journal entries and cannot approve cash payments.
 
 #### BR-ROL-003 · Tách thông tin ngân hàng NCC và duyệt chi / Separate supplier bank details and payment approval
-`Must` · `P1`
+`Must` · `P2`
 
 - **VI:** Người sửa tài khoản ngân hàng của nhà cung cấp không được duyệt thanh toán cho nhà cung cấp đó trong cùng kỳ.
 - **EN:** A user who changes a supplier's bank account cannot approve payments to that supplier within the same period.
@@ -210,25 +216,25 @@ erDiagram
 
 ### 5.2 Danh sách bảng / Tables
 
-| Bảng / Table | Mục đích (VI) | Purpose (EN) |
-|---|---|---|
-| `roles` | Vai trò: 15 vai trò mặc định (`is_system = true`, không xóa, không đổi mã) và vai trò tùy chỉnh. | Roles: the 15 default roles (`is_system = true`, cannot be deleted or re-coded) plus custom roles. |
-| `app_functions` | Danh mục chức năng — các hàng của ma trận mục 3. Khai báo trong mã nguồn, nạp bằng seed; người dùng không sửa. | Function catalog — the rows of the section 3 matrix. Defined in code and seeded; not user-editable. |
-| `role_permissions` | Mỗi dòng là một ô chức năng × hành động được cấp cho vai trò. `data_scope` để trống thì dùng phạm vi mặc định của vai trò. | One row per function × action granted to a role. An empty `data_scope` falls back to the role's default scope. |
-| `user_roles` | Gán vai trò cho người dùng; một người dùng có thể có nhiều vai trò. | Assigns roles to users; a user may hold several roles. |
-| `user_access_grants` | Chi nhánh, phòng ban, kho, quỹ mà người dùng được truy cập; dùng để tính phạm vi dữ liệu. | Branches, departments, warehouses and cash funds a user may access; used to evaluate data scope. |
-| `sensitive_fields` | Danh mục trường nhạy cảm: giá vốn, lãi gộp, giá mua, lương… | Catalog of sensitive fields: cost, gross margin, purchase price, salary… |
-| `role_field_grants` | Vai trò được xem / sửa trường nhạy cảm nào. Không có dòng = ẩn. | Which role may view / edit which sensitive field. No row = hidden. |
-| `authorization_limits` | Hạn mức theo vai trò **hoặc** theo người dùng (FR-SYS-014). | Limits per role **or** per user (FR-SYS-014). |
-| `sod_rules` | Quyền mà người giữ một vai trò không được có, dù đến từ vai trò nào. | Permissions a holder of a given role must not have, whichever role grants them. |
-| `audit_logs` | Nhật ký kiểm toán dùng chung, chỉ ghi thêm. | Shared, append-only audit log. |
+| Bảng / Table | Mục đích (VI) | Purpose (EN) | Giai đoạn / Phase |
+|---|---|---|---|
+| `roles` | Vai trò: 15 vai trò mặc định (`is_system = true`, không xóa, không đổi mã) và vai trò tùy chỉnh. | Roles: the 15 default roles (`is_system = true`, cannot be deleted or re-coded) plus custom roles. | P1 |
+| `app_functions` | Danh mục chức năng — các hàng của ma trận mục 3. Khai báo trong mã nguồn, nạp bằng seed; người dùng không sửa. | Function catalog — the rows of the section 3 matrix. Defined in code and seeded; not user-editable. | P1 |
+| `role_permissions` | Mỗi dòng là một ô chức năng × hành động được cấp cho vai trò. `data_scope` để trống thì dùng phạm vi mặc định của vai trò. | One row per function × action granted to a role. An empty `data_scope` falls back to the role's default scope. | P1 |
+| `user_roles` | Gán vai trò cho người dùng; một người dùng có thể có nhiều vai trò. | Assigns roles to users; a user may hold several roles. | P1 |
+| `user_access_grants` | Chi nhánh, phòng ban, kho, quỹ mà người dùng được truy cập; dùng để tính phạm vi dữ liệu. | Branches, departments, warehouses and cash funds a user may access; used to evaluate data scope. | P2 |
+| `sensitive_fields` | Danh mục trường nhạy cảm: giá vốn, lãi gộp, giá mua, lương… | Catalog of sensitive fields: cost, gross margin, purchase price, salary… | P2 |
+| `role_field_grants` | Vai trò được xem / sửa trường nhạy cảm nào. Không có dòng = ẩn. | Which role may view / edit which sensitive field. No row = hidden. | P2 |
+| `authorization_limits` | Hạn mức theo vai trò **hoặc** theo người dùng (FR-SYS-014). | Limits per role **or** per user (FR-SYS-014). | P2 |
+| `sod_rules` | Quyền mà người giữ một vai trò không được có, dù đến từ vai trò nào. | Permissions a holder of a given role must not have, whichever role grants them. | P2 |
+| `audit_logs` | Nhật ký kiểm toán dùng chung, chỉ ghi thêm. | Shared, append-only audit log. | P1 |
 
 ### 5.3 Kiểu liệt kê / Enumerations
 
 | Kiểu / Type | Giá trị / Values |
 |---|---|
 | `permission_action` | `VIEW` · `CREATE` · `EDIT` · `DELETE` · `APPROVE` · `CANCEL` · `PRINT` · `EXPORT` · `IMPORT` |
-| `data_scope` | `OWN` · `DEPARTMENT` · `BRANCH` · `ASSIGNED` (kho / quỹ được gán / assigned warehouses / cash funds) · `ALL` (toàn công ty / whole company) |
+| `data_scope` | `OWN` · `DEPARTMENT` · `BRANCH` · `ASSIGNED` (kho / quỹ được gán / assigned warehouses / cash funds) · `ALL` (toàn công ty / whole company). P1 chỉ dùng `OWN`, `ALL` / P1 only uses `OWN`, `ALL` |
 | `access_object_type` | `BRANCH` · `DEPARTMENT` · `WAREHOUSE` · `CASH_FUND` |
 | `field_access` | `VIEW` · `EDIT` |
 | `limit_type` | `MAX_DISCOUNT_PCT` · `MAX_SELF_CONFIRM_AMOUNT` · `MAX_APPROVAL_AMOUNT` |
@@ -274,22 +280,22 @@ Ví dụ / Example — ô `SAL` × Đơn bán hàng = `VCE` trở thành 3 dòng
 
 ### 5.5 Tính quyền hiệu lực / Resolving effective permissions
 
-| # | Quy tắc (VI) | Rule (EN) |
-|---|---|---|
-| 1 | Chỉ xét các vai trò đang hoạt động (`is_active = true`) được gán cho người dùng. | Only active roles (`is_active = true`) assigned to the user are considered. |
-| 2 | Người dùng có quyền chức năng × hành động nếu ít nhất một vai trò có dòng `role_permissions` tương ứng. | A user holds a function × action if at least one of their roles has the matching `role_permissions` row. |
-| 3 | Mỗi vai trò cấp quyền tạo ra một điều kiện lọc theo phạm vi (bảng dưới); điều kiện hiệu lực là **OR** của các điều kiện đó. | Each granting role yields one scope filter (table below); the effective filter is the **OR** of those filters. |
-| 4 | Trường nhạy cảm ẩn mặc định, chỉ hiện khi có ít nhất một vai trò được cấp trong `role_field_grants`; `EDIT` bao gồm `VIEW`. Áp dụng cho màn hình, báo cáo, bản in, dữ liệu xuất và API. | Sensitive fields are hidden by default and shown only when at least one role has a `role_field_grants` row; `EDIT` implies `VIEW`. Applies to screens, reports, printouts, exports and the API. |
-| 5 | Hạn mức: dòng theo người dùng được ưu tiên; nếu không có, lấy giá trị lớn nhất trong các vai trò; không có dòng nào = không giới hạn (xem Q-ROL-04). Số tiền tính theo đồng tiền hạch toán. | Limits: a user-level row wins; otherwise the highest value across roles applies; no row at all = unlimited (see Q-ROL-04). Amounts are in the functional currency. |
-| 6 | Khi gán vai trò cho người dùng hoặc sửa quyền của vai trò, hệ thống từ chối nếu kết quả vi phạm `sod_rules`. | Assigning a role to a user or changing a role's permissions is rejected if the result violates `sod_rules`. |
+| # | Quy tắc (VI) | Rule (EN) | Giai đoạn / Phase |
+|---|---|---|---|
+| 1 | Chỉ xét các vai trò đang hoạt động (`is_active = true`) được gán cho người dùng. | Only active roles (`is_active = true`) assigned to the user are considered. | P1 |
+| 2 | Người dùng có quyền chức năng × hành động nếu ít nhất một vai trò có dòng `role_permissions` tương ứng. | A user holds a function × action if at least one of their roles has the matching `role_permissions` row. | P1 |
+| 3 | Mỗi vai trò cấp quyền tạo ra một điều kiện lọc theo phạm vi (bảng dưới); điều kiện hiệu lực là **OR** của các điều kiện đó. | Each granting role yields one scope filter (table below); the effective filter is the **OR** of those filters. | P1 |
+| 4 | Trường nhạy cảm ẩn mặc định, chỉ hiện khi có ít nhất một vai trò được cấp trong `role_field_grants`; `EDIT` bao gồm `VIEW`. Áp dụng cho màn hình, báo cáo, bản in, dữ liệu xuất và API. | Sensitive fields are hidden by default and shown only when at least one role has a `role_field_grants` row; `EDIT` implies `VIEW`. Applies to screens, reports, printouts, exports and the API. | P2 |
+| 5 | Hạn mức: dòng theo người dùng được ưu tiên; nếu không có, lấy giá trị lớn nhất trong các vai trò; không có dòng nào = không giới hạn (xem Q-ROL-04). Số tiền tính theo đồng tiền hạch toán. | Limits: a user-level row wins; otherwise the highest value across roles applies; no row at all = unlimited (see Q-ROL-04). Amounts are in the functional currency. | P2 |
+| 6 | Khi gán vai trò cho người dùng hoặc sửa quyền của vai trò, hệ thống từ chối nếu kết quả vi phạm `sod_rules`. | Assigning a role to a user or changing a role's permissions is rejected if the result violates `sod_rules`. | P2 |
 
-| Phạm vi / Scope | Điều kiện lọc trên chứng từ (VI) | Filter on documents (EN) |
-|---|---|---|
-| `OWN` | `owner_id` = người dùng hiện tại | `owner_id` = current user |
-| `DEPARTMENT` | `department_id` thuộc phòng ban được gán, kể cả phòng ban con | `department_id` in assigned departments, including sub-departments |
-| `BRANCH` | `branch_id` thuộc chi nhánh được gán | `branch_id` in assigned branches |
-| `ALL` | Không lọc (toàn công ty) | No filter (whole company) |
-| `ASSIGNED` | `warehouse_id` / `cash_fund_id` thuộc kho / quỹ được gán | `warehouse_id` / `cash_fund_id` in assigned warehouses / cash funds |
+| Phạm vi / Scope | Điều kiện lọc trên chứng từ (VI) | Filter on documents (EN) | Giai đoạn / Phase |
+|---|---|---|---|
+| `OWN` | `owner_id` = người dùng hiện tại | `owner_id` = current user | P1 |
+| `DEPARTMENT` | `department_id` thuộc phòng ban được gán, kể cả phòng ban con | `department_id` in assigned departments, including sub-departments | P2 |
+| `BRANCH` | `branch_id` thuộc chi nhánh được gán | `branch_id` in assigned branches | P2 |
+| `ALL` | Không lọc (toàn công ty) | No filter (whole company) | P1 |
+| `ASSIGNED` | `warehouse_id` / `cash_fund_id` thuộc kho / quỹ được gán | `warehouse_id` / `cash_fund_id` in assigned warehouses / cash funds | P2 |
 
 - **VI:** Để áp dụng được phạm vi dữ liệu, mọi bảng chứng từ phải có `branch_id`, `department_id`, `owner_id` (người phụ trách, mặc định là người tạo).
 - **EN:** For data scope to work, every document table must carry `branch_id`, `department_id` and `owner_id` (the responsible user, defaulting to the creator).
@@ -367,6 +373,7 @@ CREATE INDEX ON user_roles (role_id);
 
 -- object_id trỏ tới branches / departments / warehouses / cash_funds tùy object_type
 -- object_id points to branches / departments / warehouses / cash_funds depending on object_type
+-- P2
 CREATE TABLE user_access_grants (
   id           uuid               PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id      uuid               NOT NULL REFERENCES users(id),
@@ -377,6 +384,7 @@ CREATE TABLE user_access_grants (
   UNIQUE (user_id, object_type, object_id)
 );
 
+-- P2
 CREATE TABLE sensitive_fields (
   code           varchar(80)  PRIMARY KEY,  -- vd / e.g. 'MDM.PRODUCT.cost_price'
   function_code  varchar(50)  NOT NULL REFERENCES app_functions(code),
@@ -384,6 +392,7 @@ CREATE TABLE sensitive_fields (
   name_en        varchar(150) NOT NULL
 );
 
+-- P2
 CREATE TABLE role_field_grants (
   role_id     uuid         NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
   field_code  varchar(80)  NOT NULL REFERENCES sensitive_fields(code),
@@ -391,6 +400,7 @@ CREATE TABLE role_field_grants (
   PRIMARY KEY (role_id, field_code)
 );
 
+-- P2
 CREATE TABLE authorization_limits (
   id             uuid          PRIMARY KEY DEFAULT gen_random_uuid(),
   role_id        uuid          REFERENCES roles(id) ON DELETE CASCADE,
@@ -405,6 +415,7 @@ CREATE TABLE authorization_limits (
   UNIQUE NULLS NOT DISTINCT (role_id, user_id, function_code, limit_type)
 );
 
+-- P2
 CREATE TABLE sod_rules (
   id             uuid              PRIMARY KEY DEFAULT gen_random_uuid(),
   rule_code      varchar(20)       NOT NULL,  -- vd / e.g. 'BR-ROL-002'

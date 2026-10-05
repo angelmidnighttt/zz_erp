@@ -6,6 +6,9 @@
 
 > Các giá trị định lượng dưới đây dựa trên giả định `A-03` (≈ 300 người dùng, tối đa 100 đồng thời) và cần được xác nhận.
 > The quantitative targets below assume `A-03` (≈ 300 users, up to 100 concurrent) and must be confirmed.
+>
+> Yêu cầu phi chức năng áp dụng từ P1, trừ khi cột Ưu tiên ghi giai đoạn khác.
+> Non-functional requirements apply from P1 unless the Priority column names another phase.
 
 ## 1. Hiệu năng / Performance (PERF)
 
@@ -55,7 +58,7 @@
 |---|---|---|---|
 | NFR-PRV-001 | Tuân thủ Luật Bảo vệ dữ liệu cá nhân và các văn bản hướng dẫn: xác định mục đích xử lý, thu thập tối thiểu, có cơ chế đồng ý khi cần. | Comply with the Personal Data Protection Law and its guiding regulations: defined processing purposes, data minimization, consent where required. | Must |
 | NFR-PRV-002 | Che một phần dữ liệu nhạy cảm trên giao diện (số định danh, số tài khoản, lương) với người không có quyền; ghi nhật ký truy cập dữ liệu nhạy cảm. | Mask sensitive data in the UI (ID numbers, bank accounts, salary) for unauthorized users; log access to sensitive data. | Must |
-| NFR-PRV-003 | Hỗ trợ yêu cầu của chủ thể dữ liệu: xem, chỉnh sửa, xuất dữ liệu; xóa hoặc ẩn danh hóa khi pháp luật cho phép (không xóa dữ liệu kế toán còn trong thời hạn lưu trữ). | Support data-subject requests: access, correction, export; deletion or anonymization where legally allowed (accounting data within its retention period is kept). | Should |
+| NFR-PRV-003 | Hỗ trợ yêu cầu của chủ thể dữ liệu: xem, chỉnh sửa, xuất dữ liệu; xóa hoặc ẩn danh hóa khi pháp luật cho phép (không xóa dữ liệu kế toán còn trong thời hạn lưu trữ). | Support data-subject requests: access, correction, export; deletion or anonymization where legally allowed (accounting data within its retention period is kept). | Should · P2 |
 | NFR-PRV-004 | Có quy trình phát hiện và thông báo sự cố lộ lọt dữ liệu cá nhân trong thời hạn theo quy định. | A process exists to detect and report personal-data breaches within the legally required deadline. | Must |
 | NFR-PRV-005 | Lưu trữ dữ liệu và chứng từ kế toán ≥ 10 năm theo Luật Kế toán. | Retain accounting data and documents ≥ 10 years per the Law on Accounting. | Must |
 | NFR-PRV-006 | Đánh giá yêu cầu lưu trữ dữ liệu tại Việt Nam theo pháp luật an ninh mạng trước khi chọn nơi đặt hạ tầng. | Assess Vietnamese data-localization requirements under cybersecurity law before choosing hosting location. | Must |
@@ -69,7 +72,7 @@
 | NFR-USA-003 | Hỗ trợ nhập liệu nhanh bằng bàn phím (Tab, Enter thêm dòng, phím tắt lưu / duyệt) trên các màn hình chứng từ. | Keyboard-driven fast entry (Tab, Enter adds line, shortcuts for save / approve) on document screens. | Must |
 | NFR-USA-004 | Thông báo lỗi rõ ràng, theo ngôn ngữ người dùng, chỉ ra trường bị lỗi và cách sửa. | Clear error messages in the user's language, pointing to the field and how to fix it. | Must |
 | NFR-USA-005 | Người dùng mới hoàn thành nghiệp vụ cơ bản của vai trò mình sau ≤ 1 ngày đào tạo. | New users complete their role's core tasks after ≤ 1 day of training. | Should |
-| NFR-USA-006 | Đáp ứng WCAG 2.1 mức AA cho các màn hình chính. | Meet WCAG 2.1 level AA on key screens. | Could |
+| NFR-USA-006 | Đáp ứng WCAG 2.1 mức AA cho các màn hình chính. | Meet WCAG 2.1 level AA on key screens. | Could · P4 |
 
 ## 7. Bản địa hóa / Localization (L10N)
 
@@ -120,7 +123,7 @@
 | Frontend | Frontend | Next.js (App Router), Tailwind CSS, i18n VI/EN |
 | Cơ sở dữ liệu | Database | PostgreSQL 16 |
 | ORM & migration | ORM & migrations | TypeORM (migrations có phiên bản / versioned migrations) |
-| Hàng đợi & cache | Queue & cache | Redis + BullMQ |
+| Hàng đợi & cache | Queue & cache | Redis + BullMQ (từ P2, khi có tích hợp bất đồng bộ / from P2, with asynchronous integrations) |
 | Lưu trữ tệp | File storage | Object storage tương thích S3 / S3-compatible (MinIO hoặc dịch vụ cloud / or a cloud service) |
 | Đóng gói & triển khai | Packaging & deployment | Docker, CI/CD (ví dụ GitHub Actions / e.g. GitHub Actions) |
 | Giám sát | Monitoring | OpenTelemetry, Prometheus / Grafana hoặc tương đương / or equivalent |
@@ -131,4 +134,4 @@
 |---|---|---|---|
 | NFR-SUP-001 | Hướng dẫn sử dụng song ngữ theo từng vai trò; hướng dẫn quản trị hệ thống. | Bilingual user guides per role; system administration guide. | Must |
 | NFR-SUP-002 | Đào tạo người dùng chủ chốt (key user) trước go-live; tài liệu đào tạo và video ngắn. | Key-user training before go-live; training material and short videos. | Must |
-| NFR-SUP-003 | Môi trường staging với dữ liệu ẩn danh để kiểm thử và đào tạo. | Staging environment with anonymized data for testing and training. | Should |
+| NFR-SUP-003 | Môi trường staging với dữ liệu ẩn danh để kiểm thử và đào tạo. | Staging environment with anonymized data for testing and training. | Should · P2 |

@@ -2,7 +2,7 @@
 
 [← Mục lục / Index](../README.md)
 
-> **Giai đoạn / Phase:** P2
+> **Giai đoạn / Phase:** P3 – P4
 
 ---
 
@@ -32,65 +32,76 @@ flowchart LR
 
 ## 4. Yêu cầu chức năng / Functional requirements
 
+| Giai đoạn / Phase | Nội dung (VI) | Scope (EN) |
+|---|---|---|
+| `P3` | Khách hàng tiềm năng, phân bổ, chuyển đổi; cơ hội & pipeline; hoạt động & lịch hẹn; hồ sơ khách hàng 360°; báo cáo CRM. | Leads, assignment, conversion; opportunities & pipeline; activities & appointments; customer 360° view; CRM reports. |
+| `P4` | Thu thập lead tự động; khiếu nại & chăm sóc khách hàng; phân khúc khách hàng. | Automatic lead capture; complaints & customer care; customer segmentation. |
+
+### 4.1 Giai đoạn 3 — Mở rộng / Phase 3 — Expansion
+
 #### FR-CRM-001 · Khách hàng tiềm năng / Leads
-`Should` · `P2`
+`Should` · `P3`
 
 - **VI:** Ghi nhận khách hàng tiềm năng: tên, công ty, liên hệ, nguồn (website, sự kiện, giới thiệu, mạng xã hội…), nhu cầu, nhân viên phụ trách, trạng thái; nhập hàng loạt từ Excel.
 - **EN:** Record leads: name, company, contact, source (website, event, referral, social media…), needs, owner, status; bulk import from Excel.
 
-#### FR-CRM-002 · Thu thập lead tự động / Automatic lead capture
-`Could` · `P3`
-
-- **VI:** Tạo lead tự động từ form website, quảng cáo thu thập khách hàng tiềm năng trên mạng xã hội, Zalo OA (qua API / webhook `FR-INT-014`, `FR-INT-015`).
-- **EN:** Create leads automatically from website forms, social media lead ads and Zalo OA (via API / webhooks `FR-INT-014`, `FR-INT-015`).
-
 #### FR-CRM-003 · Phân bổ lead / Lead assignment
-`Should` · `P2`
+`Should` · `P3`
 
 - **VI:** Phân bổ lead thủ công hoặc tự động theo khu vực, nhóm sản phẩm hoặc xoay vòng; thông báo cho nhân viên được giao.
 - **EN:** Assign leads manually or automatically by region, product group or round-robin; notify the assignee.
 
 #### FR-CRM-004 · Chuyển đổi lead / Lead conversion
-`Should` · `P2`
+`Should` · `P3`
 
 - **VI:** Chuyển lead đủ điều kiện thành khách hàng và cơ hội; kiểm tra trùng với khách hàng đã có (`FR-MDM-013`).
 - **EN:** Convert qualified leads into a customer and an opportunity; check for duplicates against existing customers (`FR-MDM-013`).
 
 #### FR-CRM-005 · Cơ hội & pipeline / Opportunities & pipeline
-`Should` · `P2`
+`Should` · `P3`
 
 - **VI:** Cơ hội có giá trị kỳ vọng, xác suất thành công, ngày dự kiến chốt, giai đoạn (cấu hình được); hiển thị dạng bảng kanban kéo thả; bắt buộc nhập lý do khi thắng / thua.
 - **EN:** Opportunities have expected value, probability, expected close date and stage (configurable); shown as a drag-and-drop kanban board; a win / loss reason is mandatory.
 
 #### FR-CRM-006 · Hoạt động & lịch hẹn / Activities & appointments
-`Should` · `P2`
+`Should` · `P3`
 
 - **VI:** Ghi nhận cuộc gọi, cuộc gặp, email, công việc gắn với lead / cơ hội / khách hàng; nhắc việc; lịch cá nhân và lịch nhóm.
 - **EN:** Log calls, meetings, emails and tasks against leads / opportunities / customers; reminders; personal and team calendars.
 
 #### FR-CRM-007 · Hồ sơ khách hàng 360° / Customer 360° view
-`Should` · `P2`
+`Should` · `P3`
 
 - **VI:** Một màn hình tổng hợp: thông tin liên hệ, hoạt động, cơ hội, báo giá, đơn hàng, hóa đơn, công nợ, khiếu nại, doanh số lũy kế.
 - **EN:** One screen showing contacts, activities, opportunities, quotations, orders, invoices, receivables, complaints and cumulative revenue.
 
+#### FR-CRM-010 · Báo cáo CRM / CRM reports
+`Should` · `P3`
+
+- **VI:** Phễu bán hàng, tỷ lệ chuyển đổi theo giai đoạn và nguồn, dự báo doanh số (giá trị × xác suất), hiệu suất hoạt động của nhân viên, lý do thua.
+- **EN:** Sales funnel, conversion rates by stage and source, revenue forecast (value × probability), activity performance per salesperson, loss reasons.
+
+### 4.2 Giai đoạn 4 — Nâng cao / Phase 4 — Advanced
+
+#### FR-CRM-002 · Thu thập lead tự động / Automatic lead capture
+`Could` · `P4`
+
+- **VI:** Tạo lead tự động từ form website, quảng cáo thu thập khách hàng tiềm năng trên mạng xã hội, Zalo OA (qua API / webhook `FR-INT-014`, `FR-INT-015`).
+- **EN:** Create leads automatically from website forms, social media lead ads and Zalo OA (via API / webhooks `FR-INT-014`, `FR-INT-015`).
+
 #### FR-CRM-008 · Khiếu nại & chăm sóc khách hàng / Complaints & customer care
-`Could` · `P2`
+`Could` · `P4`
 
 - **VI:** Ghi nhận phiếu khiếu nại / yêu cầu hỗ trợ, phân công xử lý, thời hạn xử lý (SLA), trạng thái, kết quả.
 - **EN:** Record complaint / support tickets, assign handlers, SLA deadlines, status and resolution.
 
 #### FR-CRM-009 · Phân khúc khách hàng / Customer segmentation
-`Could` · `P2`
+`Could` · `P4`
 
 - **VI:** Phân khúc khách hàng theo doanh số, tần suất mua, lần mua gần nhất (RFM) và thuộc tính tùy chọn.
 - **EN:** Segment customers by revenue, purchase frequency, recency (RFM) and custom attributes.
 
-#### FR-CRM-010 · Báo cáo CRM / CRM reports
-`Should` · `P2`
-
-- **VI:** Phễu bán hàng, tỷ lệ chuyển đổi theo giai đoạn và nguồn, dự báo doanh số (giá trị × xác suất), hiệu suất hoạt động của nhân viên, lý do thua.
-- **EN:** Sales funnel, conversion rates by stage and source, revenue forecast (value × probability), activity performance per salesperson, loss reasons.
+### 4.3 Không làm / Won't do
 
 #### ~~FR-CRM-011 · Email marketing~~
 `Won't`

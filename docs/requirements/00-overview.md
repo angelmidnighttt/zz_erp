@@ -38,24 +38,27 @@
 
 | Phân hệ / Module | Mã / Code | Chức năng chính (VI) | Key features (EN) | Giai đoạn / Phase |
 |---|---|---|---|---|
-| Quản trị hệ thống / System administration | SYS | Cơ cấu tổ chức, người dùng, phân quyền, luồng duyệt, đánh số chứng từ, nhật ký, mẫu in | Org structure, users, permissions, approval flows, document numbering, audit log, print templates | P1 |
-| Dữ liệu danh mục / Master data | MDM | Sản phẩm, đối tác, kho, tiền tệ, thuế, điều khoản thanh toán | Products, business partners, warehouses, currencies, taxes, payment terms | P1 |
-| Bán hàng / Sales | SAL | Báo giá, đơn bán hàng, giao hàng, hóa đơn, trả hàng, khuyến mãi | Quotations, sales orders, delivery, invoicing, returns, promotions | P1 (khuyến mãi / promotions: P2) |
-| Mua hàng / Purchasing | PUR | Đề nghị mua, yêu cầu báo giá, đơn mua, nhận hàng, đối chiếu 3 chiều, trả hàng | Purchase requests, RFQs, POs, receiving, 3-way match, returns | P1 |
-| Kho / Inventory | INV | Đa kho, nhập/xuất/chuyển kho, lô/serial, kiểm kê, tính giá xuất kho | Multi-warehouse, receipts/issues/transfers, lot/serial, stock count, inventory valuation | P1 |
-| Kế toán – Tài chính / Accounting & Finance | ACC | Sổ cái, phải thu, phải trả, tiền & ngân hàng, thuế, BCTC; TSCĐ & CCDC | GL, AR, AP, cash & bank, tax, financial statements; fixed assets & tools | P1 (TSCĐ, ngân sách / FA, budget: P2) |
-| Nhân sự – Tiền lương / HR & Payroll | HRM | Hồ sơ nhân sự, hợp đồng, chấm công, nghỉ phép, tính lương, bảo hiểm, thuế TNCN | Employee records, contracts, attendance, leave, payroll, social insurance, PIT | P2 |
-| Quản lý khách hàng / CRM | CRM | Khách hàng tiềm năng, cơ hội, hoạt động, chăm sóc khách hàng | Leads, opportunities, activities, customer care | P2 |
-| Báo cáo / Reporting | RPT | Dashboard theo vai trò, báo cáo chuẩn, xuất Excel/PDF | Role-based dashboards, standard reports, Excel/PDF export | P1 – P3 |
-| Tích hợp / Integrations | INT | HĐĐT, ngân hàng, email, API, sàn TMĐT, vận chuyển | E-invoice, banks, email, API, marketplaces, carriers | P1 – P3 |
+| Quản trị hệ thống / System administration | SYS | Cơ cấu tổ chức, người dùng, phân quyền, luồng duyệt, đánh số chứng từ, nhật ký, mẫu in | Org structure, users, permissions, approval flows, document numbering, audit log, print templates | P1 – P4 |
+| Dữ liệu danh mục / Master data | MDM | Sản phẩm, đối tác, kho, tiền tệ, thuế, điều khoản thanh toán | Products, business partners, warehouses, currencies, taxes, payment terms | P1 – P4 |
+| Bán hàng / Sales | SAL | Báo giá, đơn bán hàng, giao hàng, hóa đơn, trả hàng, khuyến mãi | Quotations, sales orders, delivery, invoicing, returns, promotions | P1 – P4 |
+| Mua hàng / Purchasing | PUR | Đề nghị mua, yêu cầu báo giá, đơn mua, nhận hàng, đối chiếu 3 chiều, trả hàng | Purchase requests, RFQs, POs, receiving, 3-way match, returns | P1 – P4 |
+| Kho / Inventory | INV | Đa kho, nhập/xuất/chuyển kho, lô/serial, kiểm kê, tính giá xuất kho | Multi-warehouse, receipts/issues/transfers, lot/serial, stock count, inventory valuation | P1 – P4 |
+| Kế toán – Tài chính / Accounting & Finance | ACC | Sổ cái, phải thu, phải trả, tiền & ngân hàng, thuế, BCTC; TSCĐ & CCDC | GL, AR, AP, cash & bank, tax, financial statements; fixed assets & tools | P1 (công nợ, tiền / AR, AP, cash) · P2 (sổ cái, thuế, BCTC / GL, tax, statements) · P3 (TSCĐ / FA) · P4 (ngân sách / budget) |
+| Nhân sự – Tiền lương / HR & Payroll | HRM | Hồ sơ nhân sự, hợp đồng, chấm công, nghỉ phép, tính lương, bảo hiểm, thuế TNCN | Employee records, contracts, attendance, leave, payroll, social insurance, PIT | P3 – P4 |
+| Quản lý khách hàng / CRM | CRM | Khách hàng tiềm năng, cơ hội, hoạt động, chăm sóc khách hàng | Leads, opportunities, activities, customer care | P3 – P4 |
+| Báo cáo / Reporting | RPT | Dashboard theo vai trò, báo cáo chuẩn, xuất Excel/PDF | Role-based dashboards, standard reports, Excel/PDF export | P1 – P4 |
+| Tích hợp / Integrations | INT | HĐĐT, ngân hàng, email, API, sàn TMĐT, vận chuyển | E-invoice, banks, email, API, marketplaces, carriers | P1 – P4 |
+
+- **VI:** Mỗi tài liệu phân hệ mở đầu mục Yêu cầu chức năng bằng bảng tóm tắt theo giai đoạn, sau đó nhóm các yêu cầu theo giai đoạn.
+- **EN:** Each module document opens its Functional requirements section with a per-phase summary table, then groups requirements by phase.
 
 ### 4.2 Ngoài phạm vi / Out of scope
 
 | # | Hạng mục (VI) | Item (EN) | Ghi chú / Note |
 |---|---|---|---|
 | X-1 | **Sản xuất**: định mức nguyên vật liệu (BOM), hoạch định nhu cầu vật tư (MRP), lệnh sản xuất, quy trình công đoạn, quản lý xưởng, tính giá thành sản xuất, QC sản xuất | **Manufacturing**: BOM, MRP, work orders, routings, shop floor control, production costing, production QC | Dự án riêng trong tương lai / Separate future project |
-| X-2 | Bán lẻ tại quầy (POS) | Retail point of sale (POS) | Có thể xem xét ở P3 / May be considered in P3 |
-| X-3 | Website thương mại điện tử | E-commerce storefront | Chỉ tích hợp sàn TMĐT ở P3 / Only marketplace integration in P3 |
+| X-2 | Bán lẻ tại quầy (POS) | Retail point of sale (POS) | Có thể xem xét ở P4 / May be considered in P4 |
+| X-3 | Website thương mại điện tử | E-commerce storefront | Chỉ tích hợp sàn TMĐT ở P4 / Only marketplace integration in P4 |
 | X-4 | Quản lý dự án & chấm công theo dự án (timesheet) | Project management & timesheets | — |
 | X-5 | Dịch vụ hiện trường, bảo hành, bảo trì | Field service, warranty, maintenance | — |
 | X-6 | Quản lý vận tải & đội xe (TMS) | Transport & fleet management (TMS) | — |
@@ -165,9 +168,13 @@ flowchart TB
 
 | Giai đoạn / Phase | Phạm vi (VI) | Scope (EN) | Điều kiện hoàn thành / Exit criteria |
 |---|---|---|---|
-| **P1 — MVP** | SYS, MDM, SAL, PUR, INV, ACC (sổ cái, phải thu, phải trả, tiền & ngân hàng, thuế GTGT, HĐĐT, BCTC), báo cáo cơ bản, tích hợp HĐĐT – email – Excel | SYS, MDM, SAL, PUR, INV, ACC (GL, AR, AP, cash & bank, VAT, e-invoice, financial statements), basic reports, e-invoice/email/Excel integrations | Vận hành song song 1 kỳ kế toán và khóa sổ thành công trên ERP / One accounting period run in parallel and closed successfully in the ERP |
-| **P2 — Mở rộng / Expansion** | HRM, CRM, TSCĐ & CCDC, ngân sách, khuyến mãi, quét mã vạch, dashboard nâng cao, REST API công khai | HRM, CRM, fixed assets & tools, budgeting, promotions, barcode scanning, advanced dashboards, public REST API | Tính lương 1 kỳ trên ERP; dashboard điều hành được ban giám đốc sử dụng / One payroll run in the ERP; executive dashboard in use by management |
-| **P3 — Tối ưu / Optimization** | Open API ngân hàng, sàn TMĐT, đơn vị vận chuyển, báo cáo tùy biến / BI, ứng dụng di động | Bank Open API, marketplaces, carriers, custom reports / BI, mobile app | Theo kế hoạch chi tiết từng hạng mục / Per item plan |
+| **P1 — Cơ bản / Basic (MVP)** | SYS cơ bản (người dùng, vai trò & quyền, duyệt một cấp), MDM, bán hàng – mua hàng – kho cơ bản, công nợ phải thu / phải trả, thu chi tiền, báo cáo cơ bản. HĐĐT phát hành trên cổng nhà cung cấp và ghi số vào ERP; sổ cái, thuế, BCTC vẫn làm trên phần mềm kế toán hiện tại | Basic SYS (users, roles & permissions, single-level approval), MDM, basic sales – purchasing – inventory, AR / AP, cash receipts & payments, basic reports. E-invoices are issued on the provider's portal and their numbers recorded in the ERP; GL, tax and financial statements stay in the current accounting software | Mua – bán – kho – công nợ – thu chi vận hành trên ERP trong 1 tháng; tồn kho và công nợ khớp với kiểm kê và đối chiếu / Purchasing, sales, inventory, AR/AP and cash run in the ERP for one month; stock and balances agree with the physical count and reconciliations |
+| **P2 — Hoàn thiện / Completion** | Kế toán đầy đủ (sổ cái, hạch toán tự động, thuế GTGT, BCTC, khóa sổ); kiểm soát (luồng duyệt nhiều cấp, phạm vi dữ liệu, hạn mức, quyền theo trường); tích hợp HĐĐT; đề nghị mua, đối chiếu 3 chiều, nhập khẩu; lô / serial, giữ hàng; dashboard theo vai trò | Full accounting (GL, automatic posting, VAT, financial statements, period close); controls (multi-level approvals, data scope, limits, field-level permissions); e-invoice integration; purchase requests, 3-way match, imports; lots / serials, reservations; role-based dashboards | Vận hành song song 1 kỳ kế toán và khóa sổ thành công trên ERP / One accounting period run in parallel and closed successfully in the ERP |
+| **P3 — Mở rộng / Expansion** | HRM, CRM, TSCĐ & CCDC, khuyến mãi, yêu cầu báo giá, quét mã vạch, dashboard nâng cao, REST API công khai | HRM, CRM, fixed assets & tools, promotions, RFQs, barcode scanning, advanced dashboards, public REST API | Tính lương 1 kỳ trên ERP; dashboard điều hành được ban giám đốc sử dụng / One payroll run in the ERP; executive dashboard in use by management |
+| **P4 — Nâng cao / Advanced** | Open API ngân hàng, sàn TMĐT, đơn vị vận chuyển, báo cáo tùy biến / BI, ngân sách, cổng nhân viên, ứng dụng di động và các tính năng "có thì tốt" | Bank Open API, marketplaces, carriers, custom reports / BI, budgeting, employee portal, mobile app and other nice-to-have features | Theo kế hoạch chi tiết từng hạng mục / Per item plan |
+
+- **VI:** So với v0.2, P1 cũ được tách thành P1 (vận hành cơ bản) và P2 (kế toán & kiểm soát); P2, P3 cũ lùi thành P3, P4.
+- **EN:** Compared with v0.2, the old P1 is split into P1 (basic operations) and P2 (accounting & controls); the old P2 and P3 become P3 and P4.
 
 > Mốc thời gian cụ thể sẽ được xác định sau khi chốt phạm vi P1.
 > Dates will be set after P1 scope is frozen.
@@ -183,10 +190,11 @@ flowchart TB
 | Q-05 | Xuất hóa đơn theo số lượng đặt hay số lượng đã giao? | Invoice on ordered or delivered quantity? | SAL, ACC |
 | Q-06 | Nhà cung cấp HĐĐT hiện tại là ai? | Who is the current e-invoice provider? | INT |
 | Q-07 | Triển khai cloud hay tại chỗ (on-premise)? Có yêu cầu lưu dữ liệu tại Việt Nam? | Cloud or on-premise? Is data residency in Vietnam required? | NFR |
-| Q-08 | Nhân sự – tiền lương có cần đưa lên P1 không? | Should HR & payroll be moved into P1? | Lộ trình / Roadmap |
+| Q-08 | Nhân sự – tiền lương có cần làm sớm hơn P3 không? | Should HR & payroll come earlier than P3? | Lộ trình / Roadmap |
 | Q-09 | Có thiết bị cần tích hợp (máy chấm công, máy quét mã vạch, máy in nhãn)? | Any devices to integrate (time clocks, barcode scanners, label printers)? | INT, INV, HRM |
 | Q-10 | Cần chuyển đổi bao nhiêu năm dữ liệu lịch sử? | How many years of historical data must be migrated? | Chuyển đổi dữ liệu / Data migration |
 | Q-11 | Ngưỡng giá trị và các cấp duyệt cho từng loại chứng từ? | Value thresholds and approval levels for each document type? | SYS, SAL, PUR, ACC |
+| Q-12 | Trong P1, có chấp nhận tiếp tục dùng phần mềm kế toán hiện tại cho sổ cái, thuế, BCTC cho đến P2 không? | In P1, is it acceptable to keep using the current accounting software for GL, tax and financial statements until P2? | ACC, Lộ trình / Roadmap |
 
 ## 11. Lịch sử phiên bản / Revision history
 
@@ -194,3 +202,4 @@ flowchart TB
 |---|---|---|---|
 | 0.1 | 2026-10-04 | Khởi tạo bản nháp / Initial draft | — |
 | 0.2 | 2026-10-05 | Chỉ phục vụ một công ty: bỏ quản lý nhiều công ty, gộp phạm vi dữ liệu `COMPANY` vào `ALL`, bỏ `company_id` khỏi mô hình dữ liệu / Single company only: removed multi-company management, merged data scope `COMPANY` into `ALL`, removed `company_id` from the data model | — |
+| 0.3 | 2026-10-05 | Chia lại 4 giai đoạn: P1 tối thiểu (mua – bán – kho, công nợ, thu chi), P2 kế toán & kiểm soát, P3 mở rộng, P4 nâng cao; mỗi tài liệu phân hệ nhóm yêu cầu theo giai đoạn / Re-phased into 4 phases: minimal P1 (purchasing – sales – inventory, AR/AP, cash), P2 accounting & controls, P3 expansion, P4 advanced; each module document groups requirements by phase | — |
