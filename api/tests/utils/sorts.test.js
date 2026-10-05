@@ -1,5 +1,5 @@
 import { mapOrder } from '~/utils/sorts'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from '@jest/globals'
 
 describe('mapOrder', () => {
   it('sorts items by the given order without mutating the original array', () => {
