@@ -1,7 +1,7 @@
 # Tài liệu dự án ERP / ERP Project Documentation
 
-> **Phiên bản / Version:** 0.1 — Bản nháp / Draft
-> **Ngày / Date:** 2026-10-04
+> **Phiên bản / Version:** 0.2 — Bản nháp / Draft
+> **Ngày / Date:** 2026-10-05
 > **Trạng thái / Status:** Chờ các bên liên quan xem xét / Pending stakeholder review
 
 Bộ tài liệu đặc tả yêu cầu **song ngữ (Tiếng Việt / English)** cho hệ thống ERP. Phạm vi hiện tại **không bao gồm phân hệ Sản xuất (Manufacturing)**; kiến trúc phải cho phép bổ sung phân hệ này về sau.

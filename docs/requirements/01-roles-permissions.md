@@ -13,7 +13,7 @@
 |---|---|---|
 | Chức năng | Function | Màn hình / nghiệp vụ, ví dụ "Đơn bán hàng" / Screen or business function, e.g. "Sales order" |
 | Hành động | Action | Xem / View · Tạo / Create · Sửa / Edit · Xóa / Delete · Duyệt / Approve · Hủy / Cancel · In / Print · Xuất / Export · Nhập / Import |
-| Phạm vi dữ liệu | Data scope | Của tôi / Own · Phòng ban / Department · Chi nhánh / Branch · Công ty / Company · Toàn hệ thống / All |
+| Phạm vi dữ liệu | Data scope | Của tôi / Own · Phòng ban / Department · Chi nhánh / Branch · Kho, quỹ được gán / Assigned · Toàn công ty / All |
 | Hạn mức | Limits | Chiết khấu tối đa, giá trị duyệt tối đa… / Max discount, max approval amount… |
 | Quyền theo trường | Field-level | Ẩn giá vốn, lãi gộp, lương… / Hide cost, gross margin, salary… |
 
@@ -21,21 +21,21 @@
 
 | Mã / Code | Vai trò (VI) | Role (EN) | Phạm vi mặc định / Default scope |
 |---|---|---|---|
-| `ADM` | Quản trị hệ thống | System administrator | Toàn hệ thống (chỉ cấu hình) / All (configuration only) |
-| `CEO` | Ban giám đốc | Executive | Công ty / Company |
+| `ADM` | Quản trị hệ thống | System administrator | Toàn công ty (chỉ cấu hình) / All (configuration only) |
+| `CEO` | Ban giám đốc | Executive | Toàn công ty / All |
 | `SAL` | Nhân viên kinh doanh | Sales staff | Của tôi / Own |
 | `SLM` | Trưởng phòng kinh doanh | Sales manager | Phòng ban hoặc chi nhánh / Department or branch |
 | `PUR` | Nhân viên mua hàng | Purchasing staff | Phòng ban / Department |
-| `PUM` | Trưởng phòng mua hàng | Purchasing manager | Công ty / Company |
+| `PUM` | Trưởng phòng mua hàng | Purchasing manager | Toàn công ty / All |
 | `WH` | Thủ kho | Warehouse keeper | Kho được gán / Assigned warehouses |
 | `WHM` | Quản lý kho | Warehouse manager | Chi nhánh / Branch |
-| `ACC` | Kế toán viên | Accountant | Công ty / Company |
-| `CAC` | Kế toán trưởng | Chief accountant | Công ty / Company |
+| `ACC` | Kế toán viên | Accountant | Toàn công ty / All |
+| `CAC` | Kế toán trưởng | Chief accountant | Toàn công ty / All |
 | `CSH` | Thủ quỹ | Cashier | Quỹ được gán / Assigned cash funds |
-| `HR` | Nhân viên nhân sự | HR staff | Công ty / Company |
-| `HRM` | Trưởng phòng nhân sự | HR manager | Công ty / Company |
+| `HR` | Nhân viên nhân sự | HR staff | Toàn công ty / All |
+| `HRM` | Trưởng phòng nhân sự | HR manager | Toàn công ty / All |
 | `EMP` | Nhân viên (tự phục vụ) | Employee (self-service) | Của tôi / Own |
-| `AUD` | Kiểm soát / Kiểm toán (chỉ xem) | Auditor (read-only) | Công ty / Company |
+| `AUD` | Kiểm soát / Kiểm toán (chỉ xem) | Auditor (read-only) | Toàn công ty / All |
 
 ## 3. Ma trận phân quyền mặc định / Default permission matrix
 
@@ -111,8 +111,8 @@ Ký hiệu / Legend: `V` Xem / View · `C` Tạo / Create · `E` Sửa / Edit ·
 
 ## 5. Mô hình dữ liệu / Data model
 
-- **VI:** Lược đồ đề xuất cho PostgreSQL 16 (xem [12 · NFR](12-non-functional.md), mục 11). Bảng `users`, `companies`, `branches`, `departments` thuộc [02 · Quản trị hệ thống](02-system-administration.md); bảng kho và quỹ thuộc phân hệ INV, ACC. Đây là bản nháp để xem xét, có thể thay đổi khi thiết kế chi tiết.
-- **EN:** Proposed schema for PostgreSQL 16 (see [12 · NFR](12-non-functional.md), section 11). The `users`, `companies`, `branches`, `departments` tables belong to [02 · System administration](02-system-administration.md); warehouse and cash-fund tables belong to INV and ACC. This is a draft for review and may change during detailed design.
+- **VI:** Lược đồ đề xuất cho PostgreSQL 16 (xem [12 · NFR](12-non-functional.md), mục 11). Bảng `users`, `branches`, `departments` thuộc [02 · Quản trị hệ thống](02-system-administration.md); bảng kho và quỹ thuộc phân hệ INV, ACC. Hệ thống chỉ phục vụ một công ty nên không có bảng `companies` và không có cột `company_id`; thông tin doanh nghiệp là một bản ghi cấu hình duy nhất (FR-SYS-001). Đây là bản nháp để xem xét, có thể thay đổi khi thiết kế chi tiết.
+- **EN:** Proposed schema for PostgreSQL 16 (see [12 · NFR](12-non-functional.md), section 11). The `users`, `branches`, `departments` tables belong to [02 · System administration](02-system-administration.md); warehouse and cash-fund tables belong to INV and ACC. The system serves a single company, so there is no `companies` table and no `company_id` column; the company profile is a single settings record (FR-SYS-001). This is a draft for review and may change during detailed design.
 
 ### 5.1 Sơ đồ quan hệ / Entity-relationship diagram
 
@@ -120,7 +120,6 @@ Ký hiệu / Legend: `V` Xem / View · `C` Tạo / Create · `E` Sửa / Edit ·
 erDiagram
     users ||--o{ user_roles : "assigned"
     roles ||--o{ user_roles : "granted to"
-    companies |o--o{ user_roles : "applies in"
     users ||--o{ user_access_grants : "may access"
     roles |o--o{ roles : "cloned from"
     roles ||--o{ role_permissions : "has"
@@ -138,10 +137,6 @@ erDiagram
     users {
         uuid id PK
         varchar username
-    }
-    companies {
-        uuid id PK
-        varchar code
     }
     roles {
         uuid id PK
@@ -167,10 +162,8 @@ erDiagram
         data_scope data_scope "NULL = role default"
     }
     user_roles {
-        uuid id PK
-        uuid user_id FK
-        uuid role_id FK
-        uuid company_id FK "NULL = all companies"
+        uuid user_id PK, FK
+        uuid role_id PK, FK
     }
     user_access_grants {
         uuid id PK
@@ -222,7 +215,7 @@ erDiagram
 | `roles` | Vai trò: 15 vai trò mặc định (`is_system = true`, không xóa, không đổi mã) và vai trò tùy chỉnh. | Roles: the 15 default roles (`is_system = true`, cannot be deleted or re-coded) plus custom roles. |
 | `app_functions` | Danh mục chức năng — các hàng của ma trận mục 3. Khai báo trong mã nguồn, nạp bằng seed; người dùng không sửa. | Function catalog — the rows of the section 3 matrix. Defined in code and seeded; not user-editable. |
 | `role_permissions` | Mỗi dòng là một ô chức năng × hành động được cấp cho vai trò. `data_scope` để trống thì dùng phạm vi mặc định của vai trò. | One row per function × action granted to a role. An empty `data_scope` falls back to the role's default scope. |
-| `user_roles` | Gán vai trò cho người dùng theo công ty; `company_id` trống = áp dụng cho mọi công ty. | Assigns roles to users per company; empty `company_id` = applies to all companies. |
+| `user_roles` | Gán vai trò cho người dùng; một người dùng có thể có nhiều vai trò. | Assigns roles to users; a user may hold several roles. |
 | `user_access_grants` | Chi nhánh, phòng ban, kho, quỹ mà người dùng được truy cập; dùng để tính phạm vi dữ liệu. | Branches, departments, warehouses and cash funds a user may access; used to evaluate data scope. |
 | `sensitive_fields` | Danh mục trường nhạy cảm: giá vốn, lãi gộp, giá mua, lương… | Catalog of sensitive fields: cost, gross margin, purchase price, salary… |
 | `role_field_grants` | Vai trò được xem / sửa trường nhạy cảm nào. Không có dòng = ẩn. | Which role may view / edit which sensitive field. No row = hidden. |
@@ -235,7 +228,7 @@ erDiagram
 | Kiểu / Type | Giá trị / Values |
 |---|---|
 | `permission_action` | `VIEW` · `CREATE` · `EDIT` · `DELETE` · `APPROVE` · `CANCEL` · `PRINT` · `EXPORT` · `IMPORT` |
-| `data_scope` | `OWN` · `DEPARTMENT` · `BRANCH` · `COMPANY` · `ALL` · `ASSIGNED` (kho / quỹ được gán / assigned warehouses / cash funds) |
+| `data_scope` | `OWN` · `DEPARTMENT` · `BRANCH` · `ASSIGNED` (kho / quỹ được gán / assigned warehouses / cash funds) · `ALL` (toàn công ty / whole company) |
 | `access_object_type` | `BRANCH` · `DEPARTMENT` · `WAREHOUSE` · `CASH_FUND` |
 | `field_access` | `VIEW` · `EDIT` |
 | `limit_type` | `MAX_DISCOUNT_PCT` · `MAX_SELF_CONFIRM_AMOUNT` · `MAX_APPROVAL_AMOUNT` |
@@ -283,11 +276,11 @@ Ví dụ / Example — ô `SAL` × Đơn bán hàng = `VCE` trở thành 3 dòng
 
 | # | Quy tắc (VI) | Rule (EN) |
 |---|---|---|
-| 1 | Chỉ xét vai trò đang hoạt động, được gán cho công ty đang làm việc hoặc cho mọi công ty. | Only active roles assigned to the current company or to all companies are considered. |
+| 1 | Chỉ xét các vai trò đang hoạt động (`is_active = true`) được gán cho người dùng. | Only active roles (`is_active = true`) assigned to the user are considered. |
 | 2 | Người dùng có quyền chức năng × hành động nếu ít nhất một vai trò có dòng `role_permissions` tương ứng. | A user holds a function × action if at least one of their roles has the matching `role_permissions` row. |
 | 3 | Mỗi vai trò cấp quyền tạo ra một điều kiện lọc theo phạm vi (bảng dưới); điều kiện hiệu lực là **OR** của các điều kiện đó. | Each granting role yields one scope filter (table below); the effective filter is the **OR** of those filters. |
 | 4 | Trường nhạy cảm ẩn mặc định, chỉ hiện khi có ít nhất một vai trò được cấp trong `role_field_grants`; `EDIT` bao gồm `VIEW`. Áp dụng cho màn hình, báo cáo, bản in, dữ liệu xuất và API. | Sensitive fields are hidden by default and shown only when at least one role has a `role_field_grants` row; `EDIT` implies `VIEW`. Applies to screens, reports, printouts, exports and the API. |
-| 5 | Hạn mức: dòng theo người dùng được ưu tiên; nếu không có, lấy giá trị lớn nhất trong các vai trò; không có dòng nào = không giới hạn (xem Q-ROL-04). Số tiền tính theo đồng tiền hạch toán của công ty. | Limits: a user-level row wins; otherwise the highest value across roles applies; no row at all = unlimited (see Q-ROL-04). Amounts are in the company's functional currency. |
+| 5 | Hạn mức: dòng theo người dùng được ưu tiên; nếu không có, lấy giá trị lớn nhất trong các vai trò; không có dòng nào = không giới hạn (xem Q-ROL-04). Số tiền tính theo đồng tiền hạch toán. | Limits: a user-level row wins; otherwise the highest value across roles applies; no row at all = unlimited (see Q-ROL-04). Amounts are in the functional currency. |
 | 6 | Khi gán vai trò cho người dùng hoặc sửa quyền của vai trò, hệ thống từ chối nếu kết quả vi phạm `sod_rules`. | Assigning a role to a user or changing a role's permissions is rejected if the result violates `sod_rules`. |
 
 | Phạm vi / Scope | Điều kiện lọc trên chứng từ (VI) | Filter on documents (EN) |
@@ -295,12 +288,11 @@ Ví dụ / Example — ô `SAL` × Đơn bán hàng = `VCE` trở thành 3 dòng
 | `OWN` | `owner_id` = người dùng hiện tại | `owner_id` = current user |
 | `DEPARTMENT` | `department_id` thuộc phòng ban được gán, kể cả phòng ban con | `department_id` in assigned departments, including sub-departments |
 | `BRANCH` | `branch_id` thuộc chi nhánh được gán | `branch_id` in assigned branches |
-| `COMPANY` | `company_id` = công ty đang làm việc | `company_id` = current company |
-| `ALL` | Không lọc, kể cả các công ty khác | No filter, across companies |
+| `ALL` | Không lọc (toàn công ty) | No filter (whole company) |
 | `ASSIGNED` | `warehouse_id` / `cash_fund_id` thuộc kho / quỹ được gán | `warehouse_id` / `cash_fund_id` in assigned warehouses / cash funds |
 
-- **VI:** Để áp dụng được phạm vi dữ liệu, mọi bảng chứng từ phải có `company_id`, `branch_id`, `department_id`, `owner_id` (người phụ trách, mặc định là người tạo).
-- **EN:** For data scope to work, every document table must carry `company_id`, `branch_id`, `department_id` and `owner_id` (the responsible user, defaulting to the creator).
+- **VI:** Để áp dụng được phạm vi dữ liệu, mọi bảng chứng từ phải có `branch_id`, `department_id`, `owner_id` (người phụ trách, mặc định là người tạo).
+- **EN:** For data scope to work, every document table must carry `branch_id`, `department_id` and `owner_id` (the responsible user, defaulting to the creator).
 
 ### 5.6 Ánh xạ quy tắc nghiệp vụ / Business-rule mapping
 
@@ -319,10 +311,10 @@ Ví dụ / Example — ô `SAL` × Đơn bán hàng = `VCE` trở thành 3 dòng
 <summary>Xem DDL / Show DDL</summary>
 
 ```sql
--- Bảng users, companies thuộc tài liệu 02 / users and companies are defined in doc 02.
+-- Bảng users thuộc tài liệu 02 / users is defined in doc 02.
 
 CREATE TYPE permission_action  AS ENUM ('VIEW','CREATE','EDIT','DELETE','APPROVE','CANCEL','PRINT','EXPORT','IMPORT');
-CREATE TYPE data_scope         AS ENUM ('OWN','DEPARTMENT','BRANCH','COMPANY','ALL','ASSIGNED');
+CREATE TYPE data_scope         AS ENUM ('OWN','DEPARTMENT','BRANCH','ASSIGNED','ALL');
 CREATE TYPE access_object_type AS ENUM ('BRANCH','DEPARTMENT','WAREHOUSE','CASH_FUND');
 CREATE TYPE field_access       AS ENUM ('VIEW','EDIT');
 CREATE TYPE limit_type         AS ENUM ('MAX_DISCOUNT_PCT','MAX_SELF_CONFIRM_AMOUNT','MAX_APPROVAL_AMOUNT');
@@ -365,13 +357,11 @@ CREATE TABLE role_permissions (
 );
 
 CREATE TABLE user_roles (
-  id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id      uuid        NOT NULL REFERENCES users(id),
   role_id      uuid        NOT NULL REFERENCES roles(id),
-  company_id   uuid        REFERENCES companies(id),  -- NULL = mọi công ty / all companies
   assigned_at  timestamptz NOT NULL DEFAULT now(),
   assigned_by  uuid        REFERENCES users(id),
-  UNIQUE NULLS NOT DISTINCT (user_id, role_id, company_id)
+  PRIMARY KEY (user_id, role_id)
 );
 CREATE INDEX ON user_roles (role_id);
 

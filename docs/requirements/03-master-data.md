@@ -187,7 +187,7 @@
 
 | Mã / ID | Quy tắc (VI) | Rule (EN) |
 |---|---|---|
-| BR-MDM-001 | Mã sản phẩm và mã đối tác là duy nhất trong công ty và không được sửa sau khi đã phát sinh giao dịch. | Product and partner codes are unique within a company and cannot change once used in transactions. |
+| BR-MDM-001 | Mã sản phẩm và mã đối tác là duy nhất trong hệ thống và không được sửa sau khi đã phát sinh giao dịch. | Product and partner codes are unique system-wide and cannot change once used in transactions. |
 | BR-MDM-002 | Không được đổi đơn vị tính cơ bản hoặc phương thức theo dõi lô/serial khi sản phẩm còn tồn kho hoặc đã có giao dịch. | Base UoM and lot/serial tracking cannot change while the product has stock or transactions. |
 | BR-MDM-003 | Danh mục đã phát sinh giao dịch chỉ được ngừng sử dụng, không được xóa. | Master data used in transactions can only be deactivated, not deleted. |
 | BR-MDM-004 | Thay đổi tài khoản ngân hàng nhà cung cấp phải được duyệt và thông báo cho kế toán trưởng. | Supplier bank-account changes require approval and are notified to the chief accountant. |

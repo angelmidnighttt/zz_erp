@@ -151,8 +151,8 @@ flowchart LR
 #### FR-INV-018 · Phương pháp tính giá xuất kho / Costing method
 `Must` · `P1`
 
-- **VI:** Hỗ trợ các phương pháp: bình quân gia quyền cuối kỳ, bình quân gia quyền tức thời (sau mỗi lần nhập), nhập trước xuất trước (FIFO), thực tế đích danh. Chọn theo công ty (tùy chọn theo kho hoặc nhóm hàng) và áp dụng nhất quán trong năm tài chính.
-- **EN:** Support: periodic weighted average, perpetual (moving) weighted average, FIFO, specific identification. Selected per company (optionally per warehouse or category) and applied consistently within the fiscal year.
+- **VI:** Hỗ trợ các phương pháp: bình quân gia quyền cuối kỳ, bình quân gia quyền tức thời (sau mỗi lần nhập), nhập trước xuất trước (FIFO), thực tế đích danh. Chọn một phương pháp chung cho doanh nghiệp (tùy chọn theo kho hoặc nhóm hàng) và áp dụng nhất quán trong năm tài chính.
+- **EN:** Support: periodic weighted average, perpetual (moving) weighted average, FIFO, specific identification. One method is selected for the company (optionally per warehouse or category) and applied consistently within the fiscal year.
 
 #### FR-INV-019 · Tính giá vốn / Cost calculation
 `Must` · `P1`

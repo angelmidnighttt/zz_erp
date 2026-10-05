@@ -13,17 +13,17 @@
 
 ### 2.1 Cơ cấu tổ chức / Organization structure
 
-#### FR-SYS-001 · Quản lý công ty / Manage companies
+#### FR-SYS-001 · Thông tin doanh nghiệp / Company profile
 `Must` · `P1`
 
-- **VI:** Hệ thống phải cho phép khai báo nhiều công ty (pháp nhân) với: tên, tên tiếng Anh, mã số thuế, địa chỉ, người đại diện pháp luật, logo, đồng tiền hạch toán, chế độ kế toán, năm tài chính. Dữ liệu nghiệp vụ của các công ty được tách biệt.
-- **EN:** The system shall support multiple companies (legal entities) with: name, English name, tax ID, address, legal representative, logo, functional currency, accounting regime and fiscal year. Business data of each company is segregated.
+- **VI:** Hệ thống chỉ phục vụ một công ty (một pháp nhân); không có chức năng thêm, xóa hay chuyển đổi giữa các công ty. Quản trị viên cấu hình thông tin doanh nghiệp: tên, tên tiếng Anh, mã số thuế, địa chỉ, người đại diện pháp luật, logo, đồng tiền hạch toán, chế độ kế toán, năm tài chính. Thông tin này được dùng cho mẫu in, hóa đơn điện tử và báo cáo.
+- **EN:** The system serves a single company (one legal entity); there is no function to add, delete or switch between companies. Administrators configure the company profile: name, English name, tax ID, address, legal representative, logo, functional currency, accounting regime and fiscal year. This profile is used on print templates, e-invoices and reports.
 
 #### FR-SYS-002 · Quản lý chi nhánh / Manage branches
 `Must` · `P1`
 
-- **VI:** Mỗi công ty có nhiều chi nhánh (mã, tên, địa chỉ, mã số thuế chi nhánh dạng 10-3 số nếu có, giám đốc chi nhánh). Chứng từ luôn gắn với một chi nhánh.
-- **EN:** Each company has multiple branches (code, name, address, branch tax ID in 10-3 format if any, branch manager). Every document belongs to one branch.
+- **VI:** Doanh nghiệp có nhiều chi nhánh (mã, tên, địa chỉ, mã số thuế chi nhánh dạng 10-3 số nếu có, giám đốc chi nhánh). Chứng từ luôn gắn với một chi nhánh.
+- **EN:** The company has multiple branches (code, name, address, branch tax ID in 10-3 format if any, branch manager). Every document belongs to one branch.
 
 #### FR-SYS-003 · Quản lý phòng ban / Manage departments
 `Must` · `P1`
@@ -36,8 +36,8 @@
 #### FR-SYS-004 · Quản lý người dùng / User management
 `Must` · `P1`
 
-- **VI:** Quản trị viên tạo, sửa, khóa/mở khóa người dùng; gán vai trò, công ty, chi nhánh, phòng ban, kho và quỹ được truy cập; liên kết người dùng với hồ sơ nhân viên. Người dùng đã phát sinh dữ liệu không được xóa cứng.
-- **EN:** Administrators create, edit, lock/unlock users; assign roles, accessible companies, branches, departments, warehouses and cash funds; link users to employee records. Users with existing data cannot be hard-deleted.
+- **VI:** Quản trị viên tạo, sửa, khóa/mở khóa người dùng; gán vai trò, chi nhánh, phòng ban, kho và quỹ được truy cập; liên kết người dùng với hồ sơ nhân viên. Người dùng đã phát sinh dữ liệu không được xóa cứng.
+- **EN:** Administrators create, edit, lock/unlock users; assign roles and accessible branches, departments, warehouses and cash funds; link users to employee records. Users with existing data cannot be hard-deleted.
 
 #### FR-SYS-005 · Đăng nhập & đăng xuất / Login & logout
 `Must` · `P1`
@@ -86,8 +86,8 @@
 #### FR-SYS-012 · Phạm vi dữ liệu / Data scope
 `Must` · `P1`
 
-- **VI:** Mỗi vai trò có phạm vi dữ liệu (của tôi, phòng ban, chi nhánh, công ty, toàn hệ thống). Phạm vi áp dụng cho danh sách, tìm kiếm, báo cáo, xuất dữ liệu và API.
-- **EN:** Each role has a data scope (own, department, branch, company, all). Scope applies to lists, search, reports, exports and the API.
+- **VI:** Mỗi vai trò có phạm vi dữ liệu (của tôi, phòng ban, chi nhánh, kho / quỹ được gán, toàn công ty). Phạm vi áp dụng cho danh sách, tìm kiếm, báo cáo, xuất dữ liệu và API.
+- **EN:** Each role has a data scope (own, department, branch, assigned warehouses / cash funds, whole company). Scope applies to lists, search, reports, exports and the API.
 
 #### FR-SYS-013 · Quyền theo trường dữ liệu / Field-level permissions
 `Should` · `P1`
@@ -213,7 +213,7 @@
 
 | Mã / ID | Quy tắc (VI) | Rule (EN) |
 |---|---|---|
-| BR-SYS-001 | Số chứng từ là duy nhất trong phạm vi một công ty. | Document numbers are unique within a company. |
+| BR-SYS-001 | Số chứng từ là duy nhất trong toàn hệ thống. | Document numbers are unique system-wide. |
 | BR-SYS-002 | Danh mục đã phát sinh giao dịch không được xóa, chỉ được ngừng sử dụng. | Master data referenced by transactions cannot be deleted, only deactivated. |
 | BR-SYS-003 | Khi người dùng bị khóa, mọi phiên đăng nhập hiện có bị thu hồi ngay lập tức. | When a user is locked, all existing sessions are revoked immediately. |
 | BR-SYS-004 | Chứng từ đang chờ duyệt không được sửa; người tạo phải rút lại (recall) trước khi sửa. | Documents pending approval cannot be edited; the creator must recall them first. |

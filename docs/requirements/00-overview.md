@@ -62,6 +62,7 @@
 | X-7 | Quản lý kho nâng cao (wave picking, robot, kho tự động) | Advanced WMS (wave picking, robotics, automated storage) | — |
 | X-8 | Hợp nhất báo cáo tài chính tập đoàn | Group financial consolidation | — |
 | X-9 | Email marketing / tự động hóa marketing | Email marketing / marketing automation | — |
+| X-10 | Quản lý nhiều công ty (pháp nhân) trên cùng hệ thống | Managing multiple companies (legal entities) on one system | Hệ thống chỉ phục vụ một công ty / The system serves a single company |
 
 - **VI:** Dù chưa làm Sản xuất, mô hình dữ liệu sản phẩm, kho và giá vốn phải được thiết kế để có thể bổ sung phân hệ Sản xuất sau này mà không phải thiết kế lại (xem `NFR-MNT-002`).
 - **EN:** Although Manufacturing is out of scope, the product, inventory and costing data model must be designed so that a Manufacturing module can be added later without redesign (see `NFR-MNT-002`).
@@ -71,10 +72,10 @@
 | # | Giả định (VI) | Assumption (EN) |
 |---|---|---|
 | A-01 | Doanh nghiệp hoạt động tại Việt Nam, lĩnh vực thương mại – phân phối và dịch vụ. | The company operates in Vietnam in trading/distribution and services. |
-| A-02 | Một pháp nhân, nhiều chi nhánh và nhiều kho; kiến trúc vẫn hỗ trợ nhiều công ty. | One legal entity with multiple branches and warehouses; the architecture still supports multiple companies. |
+| A-02 | Một công ty (một pháp nhân), nhiều chi nhánh và nhiều kho; hệ thống không hỗ trợ nhiều công ty. | A single company (one legal entity) with multiple branches and warehouses; the system does not support multiple companies. |
 | A-03 | Khoảng 300 người dùng, tối đa 100 người dùng đồng thời trong 3 năm đầu. | About 300 named users, up to 100 concurrent users in the first 3 years. |
 | A-04 | Đồng tiền hạch toán là VND; có giao dịch bằng ngoại tệ (USD, EUR, …). | Functional currency is VND; foreign-currency transactions exist (USD, EUR, …). |
-| A-05 | Áp dụng chế độ kế toán doanh nghiệp hiện hành: Thông tư 99/2025/TT-BTC (thay thế Thông tư 200/2014/TT-BTC từ 01/01/2026) hoặc Thông tư 133/2016/TT-BTC cho doanh nghiệp nhỏ và vừa; chọn được theo công ty. | The current Vietnamese enterprise accounting regime applies: Circular 99/2025/TT-BTC (replacing Circular 200/2014/TT-BTC from 2026-01-01) or Circular 133/2016/TT-BTC for SMEs; selectable per company. |
+| A-05 | Áp dụng chế độ kế toán doanh nghiệp hiện hành: Thông tư 99/2025/TT-BTC (thay thế Thông tư 200/2014/TT-BTC từ 01/01/2026) hoặc Thông tư 133/2016/TT-BTC cho doanh nghiệp nhỏ và vừa; chọn trong thông tin doanh nghiệp. | The current Vietnamese enterprise accounting regime applies: Circular 99/2025/TT-BTC (replacing Circular 200/2014/TT-BTC from 2026-01-01) or Circular 133/2016/TT-BTC for SMEs; selected in the company profile. |
 | A-06 | Doanh nghiệp sử dụng hóa đơn điện tử qua một nhà cung cấp dịch vụ HĐĐT có API. | The company issues e-invoices through an e-invoice service provider that offers an API. |
 | A-07 | Hệ thống triển khai trên cloud, người dùng truy cập qua trình duyệt web. | The system is cloud-hosted and accessed through a web browser. |
 | A-08 | Dữ liệu đầu kỳ (danh mục, tồn kho, công nợ, số dư tài khoản) được chuyển từ hệ thống cũ qua mẫu Excel. | Opening data (master data, stock, open AR/AP, account balances) is migrated from legacy systems via Excel templates. |
@@ -176,7 +177,7 @@ flowchart TB
 | # | Câu hỏi (VI) | Question (EN) | Ảnh hưởng / Impacts |
 |---|---|---|---|
 | Q-01 | Ngành hàng cụ thể và đặc thù (FMCG, dược, vật liệu xây dựng, thiết bị…)? | Specific industry and its particulars (FMCG, pharma, building materials, equipment…)? | MDM, INV (lô/hạn dùng / lot/expiry) |
-| Q-02 | Số pháp nhân, chi nhánh, kho hiện tại và dự kiến? | Current and planned number of legal entities, branches, warehouses? | SYS, ACC, INV |
+| Q-02 | Số chi nhánh, kho hiện tại và dự kiến? | Current and planned number of branches and warehouses? | SYS, ACC, INV |
 | Q-03 | Áp dụng Thông tư 99/2025 hay Thông tư 133/2016? | Circular 99/2025 or Circular 133/2016? | ACC |
 | Q-04 | Phương pháp tính giá xuất kho (bình quân cuối kỳ, bình quân tức thời, FIFO, đích danh)? | Inventory costing method (periodic average, moving average, FIFO, specific identification)? | INV, ACC |
 | Q-05 | Xuất hóa đơn theo số lượng đặt hay số lượng đã giao? | Invoice on ordered or delivered quantity? | SAL, ACC |
@@ -192,3 +193,4 @@ flowchart TB
 | Phiên bản / Version | Ngày / Date | Mô tả / Description | Người thực hiện / Author |
 |---|---|---|---|
 | 0.1 | 2026-10-04 | Khởi tạo bản nháp / Initial draft | — |
+| 0.2 | 2026-10-05 | Chỉ phục vụ một công ty: bỏ quản lý nhiều công ty, gộp phạm vi dữ liệu `COMPANY` vào `ALL`, bỏ `company_id` khỏi mô hình dữ liệu / Single company only: removed multi-company management, merged data scope `COMPANY` into `ALL`, removed `company_id` from the data model | — |

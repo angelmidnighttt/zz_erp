@@ -22,8 +22,8 @@
 | Tài sản cố định & công cụ dụng cụ / Fixed assets & tools | P2 |
 | Ngân sách / Budgeting | P2 |
 
-- **VI:** Hệ thống hỗ trợ chế độ kế toán doanh nghiệp theo Thông tư 99/2025/TT-BTC (thay thế Thông tư 200/2014/TT-BTC từ 01/01/2026) và Thông tư 133/2016/TT-BTC cho doanh nghiệp nhỏ và vừa; chọn theo công ty. Hệ thống tài khoản, mẫu chứng từ, mẫu sổ và mẫu báo cáo phải theo chế độ được chọn và cập nhật được khi quy định thay đổi.
-- **EN:** The system supports the enterprise accounting regime under Circular 99/2025/TT-BTC (replacing Circular 200/2014/TT-BTC from 2026-01-01) and Circular 133/2016/TT-BTC for SMEs, selectable per company. Chart of accounts, document forms, book formats and report templates follow the selected regime and must be updatable when regulations change.
+- **VI:** Hệ thống hỗ trợ chế độ kế toán doanh nghiệp theo Thông tư 99/2025/TT-BTC (thay thế Thông tư 200/2014/TT-BTC từ 01/01/2026) và Thông tư 133/2016/TT-BTC cho doanh nghiệp nhỏ và vừa; chọn trong thông tin doanh nghiệp (FR-SYS-001). Hệ thống tài khoản, mẫu chứng từ, mẫu sổ và mẫu báo cáo phải theo chế độ được chọn và cập nhật được khi quy định thay đổi.
+- **EN:** The system supports the enterprise accounting regime under Circular 99/2025/TT-BTC (replacing Circular 200/2014/TT-BTC from 2026-01-01) and Circular 133/2016/TT-BTC for SMEs, selected in the company profile (FR-SYS-001). Chart of accounts, document forms, book formats and report templates follow the selected regime and must be updatable when regulations change.
 
 > Các tham chiếu pháp lý cần được kế toán trưởng xác nhận lại trước khi triển khai.
 > Legal references must be re-validated by the chief accountant before implementation.

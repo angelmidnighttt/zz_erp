@@ -23,7 +23,7 @@
 |---|---|---|---|
 | NFR-SCL-001 | Kiến trúc cho phép mở rộng ngang tầng ứng dụng (nhiều instance, không lưu trạng thái phiên trên máy chủ). | The application tier scales horizontally (multiple stateless instances). | Must |
 | NFR-SCL-002 | Đáp ứng dữ liệu 10 năm với ước tính 2 triệu dòng chứng từ / năm mà không suy giảm hiệu năng đáng kể. | Handle 10 years of data at ~2 million document lines / year without significant degradation. | Should |
-| NFR-SCL-003 | Hỗ trợ nhiều công ty trên cùng một hệ thống với dữ liệu tách biệt. | Support multiple companies on one system with segregated data. | Must |
+| ~~NFR-SCL-003~~ | ~~Hỗ trợ nhiều công ty trên cùng một hệ thống với dữ liệu tách biệt.~~ Đã bỏ: hệ thống chỉ phục vụ một công ty (`A-02`, `X-10`). | ~~Support multiple companies on one system with segregated data.~~ Removed: the system serves a single company (`A-02`, `X-10`). | — |
 
 ## 3. Tính sẵn sàng & phục hồi / Availability & recovery (AVL)
 
