@@ -11,7 +11,7 @@ describe('mapOrder', () => {
 
     const result = mapOrder(original, ['id-3', 'id-1', 'id-2'], 'id')
 
-    expect(result.map((item) => item.id)).toEqual(['id-3', 'id-1', 'id-2'])
+    expect(result.map((item) => item.id)).toEqual(['id-3', 'id-', 'id-2'])
     expect(original.map((item) => item.id)).toEqual(['id-1', 'id-2', 'id-3'])
   })
 })
