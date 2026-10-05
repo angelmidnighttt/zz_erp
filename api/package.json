@@ -1,29 +1,33 @@
 {
-  "name": "zz-erp-api",
-  "version": "0.1.0",
+  "name": "nodejs-expressjs-mongodb-base-project",
   "private": true,
-  "description": "ERP backend API (Node.js + Express + TypeScript)",
-  "main": "dist/server.js",
+  "version": "1.0.0",
+  "author": "TrungQuanDev - Một Lập Trình Viên",
+  "description": "https://youtube.com/@trungquandev",
   "engines": {
     "node": ">=18.x"
   },
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/server.js",
-    "typecheck": "tsc --noEmit"
+    "lint": "eslint src --ext js --report-unused-disable-directives --max-warnings 0",
+    "clean": "rm -rf build && mkdir build",
+    "build-babel": "babel ./src -d ./build/src",
+    "build": "npm run clean && npm run build-babel",
+    "production": "npm run build && node ./build/src/server.js",
+    "dev": "nodemon --exec babel-node ./src/server.js"
   },
   "dependencies": {
-    "cors": "^2.8.6",
-    "dotenv": "^18.0.5",
-    "express": "^5.2.1",
-    "helmet": "^8.3.0"
+    "@babel/runtime": "^7.22.10",
+    "express": "^4.18.2"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@types/node": "18",
-    "tsx": "^4.23.15",
-    "typescript": "^5.9"
+    "@babel/cli": "^7.22.10",
+    "@babel/core": "^7.22.10",
+    "@babel/eslint-parser": "^7.22.10",
+    "@babel/node": "^7.22.10",
+    "@babel/plugin-transform-runtime": "^7.22.10",
+    "@babel/preset-env": "^7.22.10",
+    "babel-plugin-module-resolver": "^5.0.0",
+    "eslint": "^8.47.0",
+    "nodemon": "^3.0.1"
   }
 }
