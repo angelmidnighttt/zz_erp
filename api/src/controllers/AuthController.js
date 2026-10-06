@@ -1,5 +1,8 @@
+import AppError from "../errors/AppError.js";
 export default class AuthController {
   static async login(req, res) {
-    res.send("Login");
+    if (req.body.name === "thong") {
+      throw new AppError("Invalid username", 400);
+    }
   }
 }

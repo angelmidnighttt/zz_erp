@@ -4,6 +4,8 @@ import compression from "compression";
 import helmet from "helmet";
 import dotenv from "dotenv";
 import router from "./src/routes/index.js";
+import NotFound from "./src/middlewares/NotFound.js";
+import ErrorHandler from "./src/middlewares/ErrorHandler.js";
 dotenv.config();
 
 const app = express();
@@ -25,6 +27,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(router);
+
+app.use(NotFound);
+app.use(ErrorHandler);
 
 const port = process.env.PORT || 5000;
 
