@@ -6,7 +6,7 @@ module.exports = {
     ecmaVersion: "latest",
     sourceType: "module",
     requireConfigFile: false,
-    allowImportExportEverywhere: true
+    allowImportExportEverywhere: true,
   },
   plugins: [],
   rules: {
@@ -20,15 +20,13 @@ module.exports = {
     "no-multiple-empty-lines": 1,
     "space-before-blocks": ["error", "always"],
     "object-curly-spacing": [1, "always"],
-    indent: ["warn", 2],
     semi: [1, "always"],
     quotes: 0,
     "array-bracket-spacing": 1,
     "linebreak-style": 0,
     "no-unexpected-multiline": "warn",
     "keyword-spacing": 1,
-    "comma-dangle": 1,
     "comma-spacing": 1,
-    "arrow-spacing": 1
-  }
+    "arrow-spacing": 1,
+  },
 };
