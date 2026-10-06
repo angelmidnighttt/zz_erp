@@ -93,7 +93,7 @@
 | C-01 | Giao diện và tên danh mục hỗ trợ song ngữ Việt – Anh. | UI and master-data names support Vietnamese and English. |
 | C-02 | Tuân thủ pháp luật Việt Nam về kế toán, thuế, hóa đơn điện tử và bảo vệ dữ liệu cá nhân. | Comply with Vietnamese law on accounting, tax, e-invoicing and personal data protection. |
 | C-03 | Chứng từ và sổ kế toán được lưu trữ tối thiểu 10 năm theo Luật Kế toán. | Accounting documents and books are retained for at least 10 years under the Law on Accounting. |
-| C-04 | Công nghệ đề xuất: NestJS, Next.js, PostgreSQL (chi tiết tại [12 · NFR](12-non-functional.md), mục 11). | Proposed technology: NestJS, Next.js, PostgreSQL (details in [12 · NFR](12-non-functional.md), section 11). |
+| C-04 | Công nghệ đề xuất: NestJS, React, PostgreSQL (chi tiết tại [12 · NFR](12-non-functional.md), mục 11). | Proposed technology: NestJS, React, PostgreSQL (details in [12 · NFR](12-non-functional.md), section 11). |
 
 ## 7. Các bên liên quan / Stakeholders
 

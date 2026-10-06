@@ -114,13 +114,13 @@
 
 ## 11. Công nghệ đề xuất / Proposed technology (TEC)
 
-> Đề xuất dựa trên bộ khung ERP hiện có (NestJS + Next.js + PostgreSQL); có thể điều chỉnh khi thiết kế kiến trúc.
-> Proposal based on the existing ERP starter (NestJS + Next.js + PostgreSQL); may change during architecture design.
+> Đề xuất dựa trên bộ khung ERP hiện có (NestJS + React + PostgreSQL); có thể điều chỉnh khi thiết kế kiến trúc.
+> Proposal based on the existing ERP starter (NestJS + React + PostgreSQL); may change during architecture design.
 
 | Thành phần (VI) | Component (EN) | Đề xuất / Proposal |
 |---|---|---|
 | Backend / API | Backend / API | NestJS (Node.js ≥ 20, TypeScript) |
-| Frontend | Frontend | Next.js (App Router), Tailwind CSS, i18n VI/EN |
+| Frontend | Frontend | React (Vite, TypeScript), Tailwind CSS, i18n VI/EN |
 | Cơ sở dữ liệu | Database | PostgreSQL 16 |
 | ORM & migration | ORM & migrations | TypeORM (migrations có phiên bản / versioned migrations) |
 | Hàng đợi & cache | Queue & cache | Redis + BullMQ (từ P2, khi có tích hợp bất đồng bộ / from P2, with asynchronous integrations) |
