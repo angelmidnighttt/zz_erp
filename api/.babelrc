@@ -1,0 +1,12 @@
+
+{
+  "presets": [["@babel/preset-env", { "targets": { "node": "18" } }]],
+  "plugins": [
+    ["@babel/transform-runtime",
+      {
+        "regenerator": true
+      }
+    ],
+    ["module-resolver", { "alias": { "~": "./src" } }]
+  ]
+}

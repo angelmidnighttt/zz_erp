@@ -119,8 +119,8 @@
 
 | Thành phần (VI) | Component (EN) | Đề xuất / Proposal |
 |---|---|---|
-| Backend / API | Backend / API | NestJS (Node.js ≥ 20, TypeScript) |
-| Frontend | Frontend | React (Vite, TypeScript), Tailwind CSS, i18n VI/EN |
+| Backend / API | Backend / API | NestJS (Node.js 18, JavaScript) |
+| Frontend | Frontend | React (Vite, JavaScript), Tailwind CSS, i18n VI/EN |
 | Cơ sở dữ liệu | Database | PostgreSQL 16 |
 | ORM & migration | ORM & migrations | TypeORM (migrations có phiên bản / versioned migrations) |
 | Hàng đợi & cache | Queue & cache | Redis + BullMQ (từ P7, khi có thông báo và tích hợp bất đồng bộ / from P7, with notifications and asynchronous integrations) |

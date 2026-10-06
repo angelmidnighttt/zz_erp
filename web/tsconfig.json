@@ -1,8 +1,0 @@
-{
-  // Solution file: app code and Node-side config files are checked with different settings.
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ]
-}

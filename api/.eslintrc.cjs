@@ -1,26 +1,23 @@
 
 module.exports = {
-  root: true,
-  env: { es2022: true, node: true },
+  env: { es2020: true, node: true },
   extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended'
+    'eslint:recommended'
   ],
-  parser: '@typescript-eslint/parser',
+  parser: '@babel/eslint-parser',
   parserOptions: {
     ecmaVersion: 'latest',
-    sourceType: 'module'
+    sourceType: 'module',
+    requireConfigFile: false,
+    allowImportExportEverywhere: true
   },
-  plugins: ['@typescript-eslint'],
+  plugins: [],
   rules: {
-    // TypeScript
-    'no-unused-vars': 0,
-    '@typescript-eslint/no-unused-vars': 1,
-
     // Common
     'no-console': 1,
     'no-extra-boolean-cast': 0,
     'no-lonely-if': 1,
+    'no-unused-vars': 1,
     'no-trailing-spaces': 1,
     'no-multi-spaces': 1,
     'no-multiple-empty-lines': 1,
