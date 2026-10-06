@@ -1,0 +1,25 @@
+{
+  // Used by the editor, `yarn typecheck` and Jest; covers both src and tests.
+  // The build uses tsconfig.build.json, which only emits src.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "types": ["node"],
+    "rootDir": ".",
+    "paths": {
+      "~/*": ["./src/*"]
+    },
+
+    "strict": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["src", "tests"]
+}

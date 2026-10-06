@@ -37,5 +37,9 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
+      # Jest compiles with SWC, which strips types without checking them.
+      - name: Type check
+        run: yarn typecheck
+
       - name: Run tests
         run: yarn test

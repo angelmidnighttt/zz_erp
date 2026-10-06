@@ -1,16 +1,20 @@
 
 // Sample Eslint config for React project
 module.exports = {
+  root: true,
   env: { browser: true, es2020: true, node: true },
   extends: [
     'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
     'plugin:react/recommended',
     'plugin:react/jsx-runtime',
     'plugin:react-hooks/recommended'
   ],
+  parser: '@typescript-eslint/parser',
   parserOptions: { ecmaVersion: 'latest', sourceType: 'module' },
   settings: { react: { version: '18.2' } },
   plugins: [
+    '@typescript-eslint',
     'react',
     'react-hooks',
     'react-refresh'
@@ -22,9 +26,11 @@ module.exports = {
     'react/prop-types': 0,
     'react/display-name': 0,
 
+    'no-unused-vars': 0,
+    '@typescript-eslint/no-unused-vars': 1,
+
     'no-console': 1,
     'no-lonely-if': 1,
-    'no-unused-vars': 1,
     'no-trailing-spaces': 1,
     'no-multi-spaces': 1,
     'no-multiple-empty-lines': 1,

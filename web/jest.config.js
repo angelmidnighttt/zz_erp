@@ -1,17 +1,19 @@
 /** @type {import('jest').Config} */
 export default {
   testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
+  setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
   transform: {
-    '^.+\\.(js|jsx)$': ['@swc/jest', {
+    '^.+\\.(t|j)sx?$': ['@swc/jest', {
       jsc: {
-        parser: { syntax: 'ecmascript', jsx: true },
+        parser: { syntax: 'typescript', tsx: true },
         transform: { react: { runtime: 'automatic' } }
       }
     }]
   },
-  // Jest can't load the CSS and asset files that Vite normally handles, so replace them with stubs.
   moduleNameMapper: {
+    // Mirror the `~/*` path alias from tsconfig.app.json.
+    '^~/(.*)$': '<rootDir>/src/$1',
+    // Jest can't load the CSS and asset files that Vite normally handles, so replace them with stubs.
     '\\.(css|less|scss|sass)$': '<rootDir>/test/styleMock.cjs',
     '\\.(svg|png|jpe?g|gif|webp|ico)$': '<rootDir>/test/fileMock.cjs'
   }
