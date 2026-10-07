@@ -4,6 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import helmet from "helmet";
 import morgan from "morgan";
+import route from "./routes/index.js";
 
 dotenv.config();
 
@@ -21,8 +22,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 
-app.get("/", (req, res) => {
-    res.send("Hello World!");
-});
+//routes
+app.use('/api/v1',route)
 
 export default app;
