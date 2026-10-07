@@ -1,8 +1,15 @@
-import ApiError from "../utils/ApiError.js";
-import { success } from "../utils/Response.js";
-
-export default class AuthController {
+import authService from "../services/auth.service.js";
+import { success, error } from "../utils/Response.js";
+class AuthController {
   async login(req, res) {
-    return res.status(200).json(success("Login success"));
+    console.log("req", req.validated);
+    return await authService
+      .login(req.validated.body.email, req.validated.body.password)
+      .then((user) => {
+        res.cookie("refreshToken", user.token.refreshToken, { httpOnly: true });
+        return res.status(200).json(success(user));
+      });
   }
 }
+
+export default new AuthController();

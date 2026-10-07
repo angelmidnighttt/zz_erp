@@ -1,8 +1,15 @@
 import { z } from "zod";
 
-const createUserDto = z.object({
+const loginUserDto = z.object({
   email: z.email("Invalid email"),
   password: z.string(),
 });
 
-export { createUserDto };
+const createUserDto = z.object({
+  email: z.email("Invalid email"),
+  password: z.string(),
+  fullName: z.string(),
+  password: z.string().min(6)
+});
+
+export { loginUserDto, createUserDto };
