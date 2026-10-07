@@ -5,6 +5,8 @@ import dotenv from "dotenv";
 import helmet from "helmet";
 import morgan from "morgan";
 import route from "./routes/index.js";
+import notFound from "./middlewares/notfound.middleware.js";
+import errorHandler from "./middlewares/error.middleware.js";
 
 dotenv.config();
 
@@ -24,5 +26,8 @@ app.use(express.urlencoded({ extended: false }));
 
 //routes
 app.use('/api/v1',route)
+
+app.use(notFound);
+app.use(errorHandler);
 
 export default app;
