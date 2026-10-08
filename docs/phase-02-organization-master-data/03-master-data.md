@@ -75,8 +75,8 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P7](../
 #### FR-MDM-016 · Tiền tệ & tỷ giá / Currencies & exchange rates
 `Must` · `P2`
 
-- **VI:** Khai báo tiền tệ (mã ISO, ký hiệu, số chữ số thập phân, cách đọc bằng chữ). Tỷ giá theo ngày, gồm tỷ giá mua, bán, chuyển khoản; nhập tay hoặc nhập từ file. Lấy tỷ giá tự động từ ngân hàng là `Could`, `P11`.
-- **EN:** Define currencies (ISO code, symbol, decimals, amount-in-words wording). Daily exchange rates with buying, selling and transfer rates; entered manually or imported from file. Automatic rate retrieval from banks is `Could`, `P11`.
+- **VI:** Khai báo tiền tệ (mã ISO, ký hiệu, số chữ số thập phân, cách đọc bằng chữ). Tỷ giá theo ngày, gồm tỷ giá mua, bán, chuyển khoản; nhập tay; nhập từ file khi có nhập Excel (`FR-SYS-026`, P6). Lấy tỷ giá tự động từ ngân hàng là `Could`, `P11`.
+- **EN:** Define currencies (ISO code, symbol, decimals, amount-in-words wording). Daily exchange rates with buying, selling and transfer rates; entered manually; imported from file once Excel import exists (`FR-SYS-026`, P6). Automatic rate retrieval from banks is `Could`, `P11`.
 
 #### FR-MDM-017 · Thuế suất / Tax codes
 `Must` · `P2`
@@ -136,8 +136,8 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P7](../
 
 ## 4. Mô hình dữ liệu / Data model
 
-- **VI:** Khách hàng và nhà cung cấp dùng chung bảng `partners` (`FR-MDM-009`), phân biệt bằng `is_customer` / `is_supplier`. Tài khoản kế toán được lưu dưới dạng mã (`…_account_code`) vì hệ thống tài khoản có từ P9; P9 bổ sung khóa ngoại tới `gl_accounts`. Hình ảnh sản phẩm lưu qua `attachments`. Theo dõi lô / serial (`FR-MDM-004`) và tài khoản mặc định theo nhóm (`FR-MDM-006`) được thêm ở P8, P9.
-- **EN:** Customers and suppliers share the `partners` table (`FR-MDM-009`), flagged by `is_customer` / `is_supplier`. GL accounts are stored as codes (`…_account_code`) because the chart of accounts arrives in P9; P9 adds foreign keys to `gl_accounts`. Product images are stored through `attachments`. Lot / serial tracking (`FR-MDM-004`) and category default accounts (`FR-MDM-006`) are added in P8 and P9.
+- **VI:** Khách hàng và nhà cung cấp dùng chung bảng `partners` (`FR-MDM-009`), phân biệt bằng `is_customer` / `is_supplier`. Tài khoản kế toán được lưu dưới dạng mã (`…_account_code`) vì hệ thống tài khoản có từ P9; P9 bổ sung khóa ngoại tới `gl_accounts`. Hình ảnh sản phẩm lưu qua `attachments` (đính kèm có từ P3). Theo dõi lô / serial (`FR-MDM-004`) và tài khoản mặc định theo nhóm (`FR-MDM-006`) được thêm ở P8, P9.
+- **EN:** Customers and suppliers share the `partners` table (`FR-MDM-009`), flagged by `is_customer` / `is_supplier`. GL accounts are stored as codes (`…_account_code`) because the chart of accounts arrives in P9; P9 adds foreign keys to `gl_accounts`. Product images are stored through `attachments` (attachments arrive in P3). Lot / serial tracking (`FR-MDM-004`) and category default accounts (`FR-MDM-006`) are added in P8 and P9.
 
 ```mermaid
 erDiagram
@@ -545,6 +545,7 @@ CREATE TABLE partner_addresses (
   updated_by  uuid         REFERENCES users(id)
 );
 CREATE UNIQUE INDEX partner_addresses_one_default ON partner_addresses (partner_id) WHERE is_default;
+CREATE INDEX ON partner_addresses (partner_id);
 
 CREATE TABLE partner_contacts (
   id          uuid         PRIMARY KEY DEFAULT gen_random_uuid(),

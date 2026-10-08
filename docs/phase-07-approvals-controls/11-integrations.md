@@ -2,14 +2,14 @@
 
 [← Giai đoạn 7 · Phê duyệt & kiểm soát / Phase 7 · Approvals & controls](README.md)
 
-Các giai đoạn khác của phân hệ / Other phases of this module: [P2](../phase-02-organization-master-data/11-integrations.md) · [P9](../phase-09-accounting-einvoicing/11-integrations.md) · [P10](../phase-10-expansion/11-integrations.md) · [P11](../phase-11-advanced/11-integrations.md)
+Các giai đoạn khác của phân hệ / Other phases of this module: [P2](../phase-02-organization-master-data/11-integrations.md) · [P3](../phase-03-inventory/11-integrations.md) · [P9](../phase-09-accounting-einvoicing/11-integrations.md) · [P10](../phase-10-expansion/11-integrations.md) · [P11](../phase-11-advanced/11-integrations.md)
 
 ---
 
 ## Phạm vi giai đoạn / Phase scope
 
-- **VI:** Gửi email (quên mật khẩu, thông báo); cấu hình tên miền gửi, theo dõi trạng thái gửi.
-- **EN:** Email sending (forgot password, notifications); sending domain, delivery tracking.
+- **VI:** Gửi email (quên mật khẩu, thông báo); cấu hình tên miền gửi, theo dõi trạng thái gửi; lưu thông tin xác thực bên thứ ba được mã hóa (chuyển từ [P2](../phase-02-organization-master-data/11-integrations.md)).
+- **EN:** Email sending (forgot password, notifications); sending domain, delivery tracking; encrypted third-party credentials (moved from [P2](../phase-02-organization-master-data/11-integrations.md)).
 
 ## 1. Yêu cầu chức năng / Functional requirements
 
@@ -21,10 +21,16 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P2](../
 - **VI:** Gửi email qua SMTP hoặc dịch vụ email giao dịch; cấu hình tên miền gửi (SPF, DKIM); theo dõi trạng thái gửi và gửi lại khi lỗi.
 - **EN:** Send email via SMTP or a transactional email service; configure the sending domain (SPF, DKIM); track delivery status and retry on failure.
 
+**Yêu cầu chung cho tích hợp / General integration requirements**
+
+| Mã / ID | Yêu cầu (VI) | Requirement (EN) | Ưu tiên / Priority |
+|---|---|---|---|
+| FR-INT-021 | Thông tin xác thực của bên thứ ba được lưu mã hóa, không hiển thị lại sau khi nhập. | Third-party credentials are stored encrypted and never displayed after entry. | Must · P7 |
+
 ## 2. Mô hình dữ liệu / Data model
 
-- **VI:** Email được ghi vào hàng đợi `email_messages` trong cùng giao dịch nghiệp vụ (mẫu outbox), sau đó worker gửi và thử lại với giãn cách tăng dần. Thông tin máy chủ SMTP / dịch vụ email lưu ở `integration_credentials` (P2); SPF, DKIM cấu hình ở DNS, không cần bảng.
-- **EN:** Emails are queued in `email_messages` inside the business transaction (outbox pattern); a worker then sends them and retries with increasing back-off. SMTP / email service credentials live in `integration_credentials` (P2); SPF and DKIM are DNS settings and need no table.
+- **VI:** Email được ghi vào hàng đợi `email_messages` trong cùng giao dịch nghiệp vụ (mẫu outbox), sau đó worker gửi và thử lại với giãn cách tăng dần. Thông tin máy chủ SMTP / dịch vụ email lưu ở `integration_credentials` (tạo ở P2, `FR-INT-021`); SPF, DKIM cấu hình ở DNS, không cần bảng.
+- **EN:** Emails are queued in `email_messages` inside the business transaction (outbox pattern); a worker then sends them and retries with increasing back-off. SMTP / email service credentials live in `integration_credentials` (created in P2, `FR-INT-021`); SPF and DKIM are DNS settings and need no table.
 
 | Bảng / Table | Mục đích (VI) | Purpose (EN) |
 |---|---|---|

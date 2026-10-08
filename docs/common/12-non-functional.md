@@ -91,7 +91,7 @@
 | NFR-DAT-001 | Số tiền, số lượng, tỷ giá lưu bằng kiểu số thập phân chính xác (NUMERIC), không dùng số thực dấu phẩy động. | Amounts, quantities and rates use exact decimal types (NUMERIC), never floating point. | Must · P2 |
 | NFR-DAT-002 | Nghiệp vụ ghi sổ (chứng từ + tồn kho + bút toán) thực hiện trong một giao dịch cơ sở dữ liệu: thành công toàn bộ hoặc không gì cả. | Posting (document + stock + journal entry) runs in a single database transaction: all or nothing. | Must · P3 |
 | NFR-DAT-003 | Chống ghi đè khi nhiều người sửa cùng chứng từ (khóa lạc quan theo phiên bản); chống ghi sổ trùng khi bấm nhiều lần. | Prevent lost updates when several users edit the same document (optimistic locking by version); prevent double posting on repeated clicks. | Must · P2 |
-| NFR-DAT-004 | Công cụ chuyển đổi dữ liệu có kiểm tra, báo cáo đối chiếu số liệu trước và sau chuyển đổi. | Data migration tooling validates data and produces before/after reconciliation reports. | Must · P2 |
+| NFR-DAT-004 | Công cụ chuyển đổi dữ liệu có kiểm tra, báo cáo đối chiếu số liệu trước và sau chuyển đổi. | Data migration tooling validates data and produces before/after reconciliation reports. | Must · P6 |
 
 ## 9. Khả năng bảo trì / Maintainability (MNT)
 

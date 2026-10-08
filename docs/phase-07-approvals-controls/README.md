@@ -22,7 +22,7 @@
 | [05 · Mua hàng / Purchasing (PUR)](05-purchasing.md) | Duyệt đơn mua theo ngưỡng. | FR-PUR-009; BR-PUR-001, BR-PUR-005 |
 | [06 · Kho / Inventory (INV)](06-inventory.md) | Người dùng chỉ thao tác trên kho được gán; duyệt điều chỉnh kiểm kê theo ngưỡng giá trị. | mở rộng / extended: FR-INV-001, FR-INV-015; BR-INV-006 |
 | [10 · Báo cáo & Dashboard / Reporting & Dashboards (RPT)](10-reporting.md) | Báo cáo tuân theo phạm vi dữ liệu và quyền theo trường. | mở rộng / extended: FR-RPT-006 |
-| [11 · Tích hợp / Integrations (INT)](11-integrations.md) | Gửi email (quên mật khẩu, thông báo); cấu hình tên miền gửi, theo dõi trạng thái gửi. | FR-INT-006 |
+| [11 · Tích hợp / Integrations (INT)](11-integrations.md) | Gửi email (quên mật khẩu, thông báo); cấu hình tên miền gửi, theo dõi trạng thái gửi; lưu thông tin xác thực bên thứ ba được mã hóa. | FR-INT-006, FR-INT-021 |
 
 ## 3. NFR bắt đầu áp dụng / NFRs starting in this phase
 

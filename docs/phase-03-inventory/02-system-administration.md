@@ -2,14 +2,14 @@
 
 [← Giai đoạn 3 · Kho cơ bản / Phase 3 · Basic inventory](README.md)
 
-Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../phase-01-foundation/02-system-administration.md) · [P2](../phase-02-organization-master-data/02-system-administration.md) · [P7](../phase-07-approvals-controls/02-system-administration.md) · [P8](../phase-08-operations-completion/02-system-administration.md) · [P9](../phase-09-accounting-einvoicing/02-system-administration.md) · [P10](../phase-10-expansion/02-system-administration.md) · [P11](../phase-11-advanced/02-system-administration.md)
+Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../phase-01-foundation/02-system-administration.md) · [P2](../phase-02-organization-master-data/02-system-administration.md) · [P6](../phase-06-receivables-payables-cash/02-system-administration.md) · [P7](../phase-07-approvals-controls/02-system-administration.md) · [P8](../phase-08-operations-completion/02-system-administration.md) · [P9](../phase-09-accounting-einvoicing/02-system-administration.md) · [P10](../phase-10-expansion/02-system-administration.md) · [P11](../phase-11-advanced/02-system-administration.md)
 
 ---
 
 ## Phạm vi giai đoạn / Phase scope
 
-- **VI:** Đánh số chứng từ, mẫu in mặc định.
-- **EN:** Document numbering, default print templates.
+- **VI:** Đánh số chứng từ, mẫu in mặc định; đính kèm tệp (chuyển từ [P2](../phase-02-organization-master-data/02-system-administration.md)).
+- **EN:** Document numbering, default print templates; attachments (moved from [P2](../phase-02-organization-master-data/02-system-administration.md)).
 
 ## 1. Yêu cầu chức năng / Functional requirements
 
@@ -30,6 +30,14 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../
 - **VI:** Mỗi loại chứng từ có mẫu in mặc định (báo giá, đơn hàng, phiếu nhập/xuất kho, phiếu thu/chi…) theo mẫu của chế độ kế toán áp dụng, lấy logo và thông tin từ thông tin doanh nghiệp; hiển thị số tiền bằng chữ; xuất PDF.
 - **EN:** Each document type has a default print template (quotation, order, goods receipt/issue, cash receipt/payment…) following the applicable accounting regime forms, using the logo and details from the company profile; amounts are spelled out in words; export to PDF.
 
+**Tiện ích dùng chung / Common utilities**
+
+#### FR-SYS-023 · Đính kèm tệp / Attachments
+`Must` · `P3`
+
+- **VI:** Đính kèm tệp (PDF, ảnh, Word, Excel, XML) vào mọi chứng từ và danh mục; tối đa 20 MB/tệp (cấu hình được); xem trước PDF và ảnh. Ảnh sản phẩm (`FR-MDM-001`) và logo doanh nghiệp (`FR-SYS-001`) dùng chức năng này. Thêm / xóa tệp cần quyền Sửa, xem / tải tệp cần quyền Xem trên chức năng của bản ghi được đính kèm.
+- **EN:** Attach files (PDF, images, Word, Excel, XML) to any document or master record; max 20 MB per file (configurable); preview PDFs and images. Product images (`FR-MDM-001`) and the company logo (`FR-SYS-001`) use this feature. Adding / removing files needs Edit, viewing / downloading needs View on the function of the record the file is attached to.
+
 ## 2. Quy tắc nghiệp vụ / Business rules
 
 | Mã / ID | Quy tắc (VI) | Rule (EN) | Giai đoạn / Phase |
@@ -40,6 +48,8 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../
 
 - **VI:** `document_types` là danh mục loại chứng từ khai báo trong mã nguồn; mỗi phân hệ nạp loại chứng từ của mình khi được triển khai. Số chính thức được cấp trong cùng giao dịch xác nhận chứng từ bằng `UPDATE document_sequence_counters … RETURNING last_value` (khóa dòng nên không trùng), sau đó ghi vào `issued_document_numbers` để bảo đảm `BR-SYS-001` trên mọi bảng chứng từ.
 - **EN:** `document_types` is a code-defined catalog of document types; each module seeds its own types when delivered. The official number is assigned in the confirmation transaction with `UPDATE document_sequence_counters … RETURNING last_value` (row-locked, so no duplicates), then recorded in `issued_document_numbers` to guarantee `BR-SYS-001` across all document tables.
+- **VI:** Đính kèm (`FR-SYS-023`) dùng bảng `attachments` và `stored_files` đã tạo ở P2 ([02](../phase-02-organization-master-data/02-system-administration.md), [11](../phase-02-organization-master-data/11-integrations.md)), không đổi lược đồ; giới hạn dung lượng và loại tệp lấy từ tham số `attachments.max_size_mb`, `attachments.allowed_types`.
+- **EN:** Attachments (`FR-SYS-023`) use the `attachments` and `stored_files` tables created in P2, with no schema change; size and file-type limits come from the `attachments.max_size_mb` and `attachments.allowed_types` parameters.
 
 ```mermaid
 erDiagram

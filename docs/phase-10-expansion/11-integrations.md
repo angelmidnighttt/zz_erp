@@ -2,7 +2,7 @@
 
 [← Giai đoạn 10 · Mở rộng / Phase 10 · Expansion](README.md)
 
-Các giai đoạn khác của phân hệ / Other phases of this module: [P2](../phase-02-organization-master-data/11-integrations.md) · [P7](../phase-07-approvals-controls/11-integrations.md) · [P9](../phase-09-accounting-einvoicing/11-integrations.md) · [P11](../phase-11-advanced/11-integrations.md)
+Các giai đoạn khác của phân hệ / Other phases of this module: [P2](../phase-02-organization-master-data/11-integrations.md) · [P3](../phase-03-inventory/11-integrations.md) · [P7](../phase-07-approvals-controls/11-integrations.md) · [P9](../phase-09-accounting-einvoicing/11-integrations.md) · [P11](../phase-11-advanced/11-integrations.md)
 
 ---
 

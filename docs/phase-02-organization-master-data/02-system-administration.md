@@ -2,16 +2,18 @@
 
 [← Giai đoạn 2 · Tổ chức & danh mục / Phase 2 · Organization & master data](README.md)
 
-Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../phase-01-foundation/02-system-administration.md) · [P3](../phase-03-inventory/02-system-administration.md) · [P7](../phase-07-approvals-controls/02-system-administration.md) · [P8](../phase-08-operations-completion/02-system-administration.md) · [P9](../phase-09-accounting-einvoicing/02-system-administration.md) · [P10](../phase-10-expansion/02-system-administration.md) · [P11](../phase-11-advanced/02-system-administration.md)
+Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../phase-01-foundation/02-system-administration.md) · [P3](../phase-03-inventory/02-system-administration.md) · [P6](../phase-06-receivables-payables-cash/02-system-administration.md) · [P7](../phase-07-approvals-controls/02-system-administration.md) · [P8](../phase-08-operations-completion/02-system-administration.md) · [P9](../phase-09-accounting-einvoicing/02-system-administration.md) · [P10](../phase-10-expansion/02-system-administration.md) · [P11](../phase-11-advanced/02-system-administration.md)
 
 ---
 
 ## Phạm vi giai đoạn / Phase scope
 
-- **VI:** Thông tin doanh nghiệp, chi nhánh, phòng ban; liên kết người dùng với nhân viên; tham số hệ thống; tên tiếng Anh trên danh mục; đính kèm, nhập / xuất Excel, tìm kiếm.
-- **EN:** Company profile, branches, departments; linking users to employees; system parameters; English names on master data; attachments, Excel import / export, search.
+- **VI:** Thông tin doanh nghiệp, chi nhánh, phòng ban; liên kết người dùng với nhân viên; tham số hệ thống; tên tiếng Anh trên danh mục; tìm kiếm.
+- **EN:** Company profile, branches, departments; linking users to employees; system parameters; English names on master data; search.
 - **VI:** Chuyển sang [P7](../phase-07-approvals-controls/02-system-administration.md): quên mật khẩu (`FR-SYS-007`), khóa tài khoản & lịch sử mật khẩu, đăng xuất mọi thiết bị, sao chép vai trò, nhật ký kiểm toán (`FR-SYS-029`), chuyển ngôn ngữ giao diện theo người dùng.
 - **EN:** Moved to [P7](../phase-07-approvals-controls/02-system-administration.md): forgot password (`FR-SYS-007`), lockout & password history, sign-out from all devices, role cloning, audit log (`FR-SYS-029`), per-user UI language switching.
+- **VI:** Chuyển sang [P3](../phase-03-inventory/02-system-administration.md): đính kèm tệp (`FR-SYS-023`). Chuyển sang [P6](../phase-06-receivables-payables-cash/02-system-administration.md): nhập dữ liệu từ Excel (`FR-SYS-026`), xuất dữ liệu (`FR-SYS-027`). Bảng `attachments`, `import_jobs` vẫn tạo ở giai đoạn này (mục 4).
+- **EN:** Moved to [P3](../phase-03-inventory/02-system-administration.md): attachments (`FR-SYS-023`). Moved to [P6](../phase-06-receivables-payables-cash/02-system-administration.md): Excel import (`FR-SYS-026`), data export (`FR-SYS-027`). The `attachments` and `import_jobs` tables are still created in this phase (section 4).
 
 ## 1. Mục tiêu / Objectives
 
@@ -50,24 +52,6 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../
 
 **Tiện ích dùng chung / Common utilities**
 
-#### FR-SYS-023 · Đính kèm tệp / Attachments
-`Must` · `P2`
-
-- **VI:** Đính kèm tệp (PDF, ảnh, Word, Excel, XML) vào mọi chứng từ và danh mục; tối đa 20 MB/tệp (cấu hình được); xem trước PDF và ảnh.
-- **EN:** Attach files (PDF, images, Word, Excel, XML) to any document or master record; max 20 MB per file (configurable); preview PDFs and images.
-
-#### FR-SYS-026 · Nhập dữ liệu từ Excel / Excel import
-`Must` · `P2` (mở rộng / extended: `P8`)
-
-- **VI:** Cung cấp mẫu Excel tải về cho danh mục và số dư đầu kỳ; kiểm tra dữ liệu và báo lỗi theo từng dòng; nhập là giao dịch toàn vẹn (lỗi thì không ghi dòng nào).
-- **EN:** Provide downloadable Excel templates for master data and opening balances; validate and report errors per row; imports are all-or-nothing.
-
-#### FR-SYS-027 · Xuất dữ liệu / Data export
-`Must` · `P2`
-
-- **VI:** Mọi danh sách xuất được ra Excel / CSV / PDF theo bộ lọc và cột đang hiển thị; người xuất phải có quyền Xem trên chức năng đó. Phạm vi dữ liệu và quyền theo trường áp dụng từ P7.
-- **EN:** Every list can be exported to Excel / CSV / PDF using the current filters and visible columns; the user needs View on that function. Data scope and field-level permissions apply from P7.
-
 #### FR-SYS-028 · Tìm kiếm & bộ lọc / Search & filters
 `Must` · `P2` (mở rộng / extended: `P8`)
 
@@ -94,8 +78,8 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../
 
 ## 4. Mô hình dữ liệu / Data model
 
-- **VI:** Khối này khai báo các thành phần dùng chung cho mọi giai đoạn sau: extension, hàm tìm kiếm không dấu, domain số thập phân chính xác (`NFR-DAT-001`) và domain mã số thuế. Liên kết người dùng với nhân viên (`users.employee_id`, mở rộng `FR-SYS-004`) và khóa ngoại tới người phụ trách chi nhánh / phòng ban được thêm ở [03 · Dữ liệu danh mục](03-master-data.md), sau khi có bảng `employees`.
-- **EN:** This block declares the building blocks shared by every later phase: extensions, the accent-insensitive search function, exact-decimal domains (`NFR-DAT-001`) and the tax ID domain. The user–employee link (`users.employee_id`, `FR-SYS-004` extension) and the foreign keys to branch / department managers are added in [03 · Master Data](03-master-data.md), once the `employees` table exists.
+- **VI:** Khối này khai báo các thành phần dùng chung cho mọi giai đoạn sau: extension, hàm tìm kiếm không dấu, domain số thập phân chính xác (`NFR-DAT-001`) và domain mã số thuế. Bảng `attachments` (`FR-SYS-023`, dùng từ P3) và `import_jobs` (`FR-SYS-026`, dùng từ P6) được tạo sẵn ở đây để giai đoạn sau không phải đổi lược đồ. Liên kết người dùng với nhân viên (`users.employee_id`, mở rộng `FR-SYS-004`) và khóa ngoại tới người phụ trách chi nhánh / phòng ban được thêm ở [03 · Dữ liệu danh mục](03-master-data.md), sau khi có bảng `employees`.
+- **EN:** This block declares the building blocks shared by every later phase: extensions, the accent-insensitive search function, exact-decimal domains (`NFR-DAT-001`) and the tax ID domain. The `attachments` (`FR-SYS-023`, used from P3) and `import_jobs` (`FR-SYS-026`, used from P6) tables are created here up front so later phases need no schema change. The user–employee link (`users.employee_id`, `FR-SYS-004` extension) and the foreign keys to branch / department managers are added in [03 · Master Data](03-master-data.md), once the `employees` table exists.
 
 ```mermaid
 erDiagram
@@ -112,8 +96,8 @@ erDiagram
 | `branches` | Chi nhánh; `code` dùng trong số chứng từ (`FR-SYS-002`). | Branches; `code` is used in document numbers (`FR-SYS-002`). |
 | `departments` | Phòng ban dạng cây (`FR-SYS-003`). | Department tree (`FR-SYS-003`). |
 | `system_settings` | Tham số hệ thống dạng khóa – giá trị JSON (`FR-SYS-020`); giai đoạn sau thêm khóa bằng `INSERT`, không cần đổi lược đồ. | System parameters as key – JSON value (`FR-SYS-020`); later phases add keys with `INSERT`, without schema changes. |
-| `attachments` | Đính kèm tệp vào mọi chứng từ / danh mục (`FR-SYS-023`). | Files attached to any document / master record (`FR-SYS-023`). |
-| `import_jobs` | Lượt nhập Excel; nhập trong một giao dịch, lỗi theo dòng lưu ở `errors` (`FR-SYS-026`). | Excel import runs; one transaction per import, per-row errors in `errors` (`FR-SYS-026`). |
+| `attachments` | Đính kèm tệp vào mọi chứng từ / danh mục (`FR-SYS-023`, dùng từ P3). | Files attached to any document / master record (`FR-SYS-023`, used from P3). |
+| `import_jobs` | Lượt nhập Excel; nhập trong một giao dịch, lỗi theo dòng lưu ở `errors` (`FR-SYS-026`, dùng từ P6). | Excel import runs; one transaction per import, per-row errors in `errors` (`FR-SYS-026`, used from P6). |
 
 | Kiểu / Type | Định nghĩa / Definition |
 |---|---|
