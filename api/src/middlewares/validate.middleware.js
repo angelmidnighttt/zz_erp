@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { error } from "../utils/response.js";
 
 const validate = (schemas) => {
@@ -8,7 +9,7 @@ const validate = (schemas) => {
     for (const [key, schema] of Object.entries(schemas)) {
       const result = schema.safeParse(req[key]);
       if (!result.success) {
-        errors[key] = result.error.flatten().fieldErrors;
+        errors[key] = z.flattenError(result.error).fieldErrors;
         continue;
       }
       validated[key] = result.data;

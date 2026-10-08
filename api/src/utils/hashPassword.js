@@ -1,7 +1,8 @@
 import bcryptjs from "bcryptjs";
-//code hoi au, ae thong cam, co thoi gian minh se refactor lai
-export const hashPassword = (password) => {
-  const salt = bcryptjs.genSaltSync(10);
-  return bcryptjs.hashSync(password, salt);
-};
 
+const SALT_ROUNDS = 10;
+
+export const hashPassword = (password) => bcryptjs.hash(password, SALT_ROUNDS);
+
+export const comparePassword = (password, passwordHash) =>
+  bcryptjs.compare(password, passwordHash);

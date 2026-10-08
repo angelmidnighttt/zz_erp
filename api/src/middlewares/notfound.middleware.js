@@ -1,7 +1,7 @@
-import {error} from "../utils/response.js";
+import { error } from "../utils/response.js";
 
 const notFound = (req, res, next) => {
-    return res.status(404).json(error("Route not found"));
-}
+  return res.status(404).json(error(404, "Route not found"));
+};
 
 export default notFound;

@@ -1,13 +1,14 @@
-// Update with your config settings.
-import dotenv from "dotenv";
-dotenv.config();
+import "dotenv/config.js";
+
 /**
  * @type { Object.<string, import("knex").Knex.Config> }
  */
-export default  {
+export default {
   development: {
     client: "postgresql",
     connection: {
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT,
       database: process.env.DB_NAME,
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
@@ -20,9 +21,8 @@ export default  {
       tableName: "knex_migrations",
       directory: "./src/migrations",
     },
-    seeds:{
-      directory: "./src/seeds"
-    }
-  
+    seeds: {
+      directory: "./src/seeds",
+    },
   },
 };

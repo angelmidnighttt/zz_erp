@@ -3,7 +3,7 @@ const success = (data) => ({
   data,
 });
 
-const error = (code,message) => ({
+const error = (code, message) => ({
   success: false,
   code,
   message,

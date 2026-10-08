@@ -1,4 +1,4 @@
-exports.up = function (knex) {
+export const up = function (knex) {
   return knex
     .raw(
       `
@@ -146,8 +146,15 @@ exports.up = function (knex) {
     });
 };
 
-exports.down = function (knex) {
-  return knex.schema.dropTable("users");
+export const down = function (knex) {
+  return knex.schema
+    .dropTableIfExists("refresh_tokens")
+    .dropTableIfExists("role_permissions")
+    .dropTableIfExists("user_roles")
+    .dropTableIfExists("app_functions")
+    .dropTableIfExists("roles")
+    .dropTableIfExists("users")
+    .then(() => knex.raw("drop type if exists permission_action"));
 };
 
-exports.config = { transaction: false };
+export const config = { transaction: false };
