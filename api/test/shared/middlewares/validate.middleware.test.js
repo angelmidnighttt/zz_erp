@@ -1,7 +1,7 @@
 import { describe, it, mock } from "node:test";
 import assert from "node:assert/strict";
-import validate from "../../src/middlewares/validate.middleware.js";
-import { assignRolesDto, userIdParamDto } from "../../src/dtos/auth.dto.js";
+import validate from "../../../src/shared/middlewares/validate.middleware.js";
+import { assignRolesDto, userIdParamDto } from "../../../src/modules/auth/auth.dto.js";
 
 const ROLE_ID = "ba06a758-ffac-4287-91e1-b2f2601dde84";
 

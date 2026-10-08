@@ -5,9 +5,9 @@ import cors from "cors";
 
 import helmet from "helmet";
 import morgan from "morgan";
-import route from "./routes/index.js";
-import notFound from "./middlewares/notfound.middleware.js";
-import errorHandler from "./middlewares/error.middleware.js";
+import route from "./modules/index.js";
+import notFound from "./shared/middlewares/notfound.middleware.js";
+import errorHandler from "./shared/middlewares/error.middleware.js";
 
 const app = express();
 

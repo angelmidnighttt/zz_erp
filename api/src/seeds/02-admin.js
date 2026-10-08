@@ -3,7 +3,7 @@ import {
   ROLES,
   DEFAULT_MATRIX,
   ACTIONS,
-} from "../constant/permission.js";
+} from "../shared/constants/permission.js";
 
 //use onConflict to ignore duplicate seed
 export const seed = async (knex) => {

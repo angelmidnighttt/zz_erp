@@ -1,10 +1,10 @@
-import "../setup.js";
+import "../../setup.js";
 import { describe, it, before, after, afterEach, mock } from "node:test";
 import assert from "node:assert/strict";
-import app from "../../src/app.js";
-import database from "../../src/configs/database.js";
-import AuthRepo from "../../src/repositories/auth.repo.js";
-import { hashPassword } from "../../src/utils/hashPassword.js";
+import app from "../../../src/app.js";
+import database from "../../../src/shared/db/database.js";
+import AuthRepo from "../../../src/modules/auth/auth.repo.js";
+import { hashPassword } from "../../../src/shared/utils/password.js";
 
 let server;
 let baseUrl;

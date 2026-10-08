@@ -1,5 +1,5 @@
-import authService from "../services/auth.service.js";
-import { success } from "../utils/response.js";
+import authService from "./auth.service.js";
+import { success } from "../../shared/utils/response.js";
 
 class AuthController {
   async login(req, res) {

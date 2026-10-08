@@ -1,4 +1,4 @@
-// src/constant/permission.js
+// src/shared/constants/permission.js
 
 export const FUNCTIONS = {
   USER_ROLE:  "SYS.USER_ROLE",

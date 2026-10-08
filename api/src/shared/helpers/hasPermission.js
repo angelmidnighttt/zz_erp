@@ -1,7 +1,7 @@
-import database from "../configs/database.js";
+import { db } from "../db/transaction.js";
 
 export const hasPermission = async ({ userId, functionCode, action }) => {
-  const permission = await database("user_roles as ur")
+  const permission = await db("user_roles as ur")
     .join("roles as r", "ur.role_id", "r.id")
     .join("role_permissions as rp", "r.id", "rp.role_id")
     .where({

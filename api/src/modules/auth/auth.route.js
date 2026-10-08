@@ -1,16 +1,16 @@
 import { Router } from "express";
-import AuthController from "../controllers/auth.controller.js";
-import asyncHandler from "../middlewares/asyncHandler.js";
-import validate from "../middlewares/validate.middleware.js";
+import AuthController from "./auth.controller.js";
+import asyncHandler from "../../shared/middlewares/asyncHandler.js";
+import validate from "../../shared/middlewares/validate.middleware.js";
 import {
   createUserDto,
   loginUserDto,
   userIdParamDto,
   assignRolesDto,
-} from "../dtos/auth.dto.js";
-import { authenticate } from "../middlewares/authenticate.js";
-import { requirePermission } from "../middlewares/requirePermission.js";
-import { FUNCTIONS, ACTIONS } from "../constant/permission.js";
+} from "./auth.dto.js";
+import { authenticate } from "../../shared/middlewares/authenticate.js";
+import { requirePermission } from "../../shared/middlewares/requirePermission.js";
+import { FUNCTIONS, ACTIONS } from "../../shared/constants/permission.js";
 
 const route = Router();
 

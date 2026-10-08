@@ -1,15 +1,25 @@
-import "../setup.js";
-import { describe, it, afterEach, mock } from "node:test";
+import "../../setup.js";
+import { describe, it, beforeEach, afterEach, mock } from "node:test";
 import assert from "node:assert/strict";
-import AuthRepo from "../../src/repositories/auth.repo.js";
-import authService from "../../src/services/auth.service.js";
-import ApiError from "../../src/utils/ApiError.js";
-import { hashPassword, comparePassword } from "../../src/utils/hashPassword.js";
-import { verifyAccessToken } from "../../src/utils/jwt.js";
+import AuthRepo from "../../../src/modules/auth/auth.repo.js";
+import authService from "../../../src/modules/auth/auth.service.js";
+import ApiError from "../../../src/shared/utils/ApiError.js";
+import { hashPassword, comparePassword } from "../../../src/shared/utils/password.js";
+import { verifyAccessToken } from "../../../src/shared/utils/jwt.js";
+import transaction from "../../../src/shared/db/transaction.js";
+import eventBus from "../../../src/shared/events/event-bus.js";
+import { AUTH_EVENTS } from "../../../src/modules/auth/auth.events.js";
 
 const USER_ID = "3f101555-3082-4588-aa3a-6428d5ae7350";
 
 afterEach(() => mock.restoreAll());
+
+// Khong can DB: transaction.run chay thang fn, emit chi ghi nhan event da phat
+let emit;
+const mockTransaction = () => {
+  mock.method(transaction, "run", (fn) => fn());
+  emit = mock.method(eventBus, "emit", async () => {});
+};
 
 describe("AuthService.login", () => {
   it("throws 404 when the email does not exist", async () => {
@@ -69,6 +79,8 @@ describe("AuthService.createUser", () => {
     password: "secret123",
   };
 
+  beforeEach(mockTransaction);
+
   it("throws 400 when the email is already used", async () => {
     mock.method(AuthRepo, "getUserByEmail", async () => ({ id: USER_ID }));
     const createUser = mock.method(AuthRepo, "createUser", async () => ({}));
@@ -78,6 +90,7 @@ describe("AuthService.createUser", () => {
       (err) => err instanceof ApiError && err.statusCode === 400,
     );
     assert.equal(createUser.mock.callCount(), 0);
+    assert.equal(emit.mock.callCount(), 0);
   });
 
   it("hashes the password before passing it to the repo", async () => {
@@ -97,9 +110,24 @@ describe("AuthService.createUser", () => {
     assert.ok(await comparePassword(payload.password, arg.passwordHash));
     assert.deepEqual(user, { id: USER_ID, email: payload.email });
   });
+
+  it("emits USER_CREATED inside the transaction", async () => {
+    mock.method(AuthRepo, "getUserByEmail", async () => undefined);
+    mock.method(AuthRepo, "createUser", async () => ({ id: USER_ID }));
+
+    await authService.createUser(payload);
+
+    assert.equal(transaction.run.mock.callCount(), 1);
+    assert.deepEqual(emit.mock.calls[0].arguments, [
+      AUTH_EVENTS.USER_CREATED,
+      { user: { id: USER_ID } },
+    ]);
+  });
 });
 
 describe("AuthService.assignRoles", () => {
+  beforeEach(mockTransaction);
+
   it("passes userId and rolesId to the repo as an object", async () => {
     const rolesId = ["ba06a758-ffac-4287-91e1-b2f2601dde84"];
     const assignRoles = mock.method(AuthRepo, "assignRoles", async () => []);
@@ -107,6 +135,10 @@ describe("AuthService.assignRoles", () => {
     await authService.assignRoles({ userId: USER_ID, rolesId });
 
     assert.deepEqual(assignRoles.mock.calls[0].arguments, [
+      { userId: USER_ID, rolesId },
+    ]);
+    assert.deepEqual(emit.mock.calls[0].arguments, [
+      AUTH_EVENTS.ROLES_ASSIGNED,
       { userId: USER_ID, rolesId },
     ]);
   });
