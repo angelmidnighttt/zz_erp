@@ -22,13 +22,13 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P2](../
 - **EN:** Administrators create, edit, lock/unlock users; assign roles. Users with existing data cannot be hard-deleted.
 
 #### FR-SYS-005 · Đăng nhập & đăng xuất / Login & logout
-`Must` · `P1` (mở rộng / extended: `P2`)
+`Must` · `P1` (mở rộng / extended: `P7`)
 
 - **VI:** Người dùng đăng nhập bằng email hoặc tên đăng nhập và mật khẩu. Hệ thống dùng access token ngắn hạn và refresh token xoay vòng; người dùng đăng xuất khỏi thiết bị hiện tại.
 - **EN:** Users sign in with email or username and password. The system uses short-lived access tokens with rotating refresh tokens; users sign out of the current device.
 
 #### FR-SYS-006 · Chính sách mật khẩu & khóa tài khoản / Password policy & lockout
-`Must` · `P1` (mở rộng / extended: `P2`)
+`Must` · `P1` (mở rộng / extended: `P7`)
 
 - **VI:** Mật khẩu tối thiểu 10 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt. Người dùng đổi được mật khẩu của mình; quản trị viên đặt lại mật khẩu cho người dùng.
 - **EN:** Passwords have at least 10 characters with upper case, lower case, digits and special characters. Users can change their own password; administrators reset passwords for users.
@@ -36,7 +36,7 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P2](../
 **Phân quyền / Authorization**
 
 #### FR-SYS-011 · Quản lý vai trò & quyền / Role & permission management
-`Must` · `P1` (mở rộng / extended: `P2`)
+`Must` · `P1` (mở rộng / extended: `P7`)
 
 - **VI:** Quản trị viên tạo vai trò và gán quyền theo ma trận chức năng × hành động (xem [01 · Vai trò & phân quyền](01-roles-permissions.md)).
 - **EN:** Administrators create roles and grant permissions as a function × action matrix (see [01 · Roles & permissions](01-roles-permissions.md)).

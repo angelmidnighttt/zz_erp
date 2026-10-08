@@ -8,12 +8,18 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../
 
 ## Phạm vi giai đoạn / Phase scope
 
-- **VI:** Xác thực hai lớp, quản lý phiên; phạm vi dữ liệu, quyền theo trường, hạn mức; duyệt một cấp và luồng duyệt nhiều cấp; thông báo.
-- **EN:** MFA, session management; data scope, field-level permissions, limits; single-level approval and multi-level approval flows; notifications.
+- **VI:** Xác thực hai lớp, quản lý phiên; phạm vi dữ liệu, quyền theo trường, hạn mức; duyệt một cấp và luồng duyệt nhiều cấp; thông báo. Chuyển từ P2: quên mật khẩu, khóa tài khoản, lịch sử mật khẩu, đăng xuất mọi thiết bị; sao chép vai trò; nhật ký kiểm toán; chuyển ngôn ngữ theo người dùng.
+- **EN:** MFA, session management; data scope, field-level permissions, limits; single-level approval and multi-level approval flows; notifications. Moved from P2: forgot password, lockout, password history, sign-out from all devices; role cloning; audit log; per-user language switching.
 
 ## 1. Yêu cầu chức năng / Functional requirements
 
 **Người dùng & xác thực / Users & authentication**
+
+#### FR-SYS-007 · Quên mật khẩu / Forgot password
+`Must` · `P7`
+
+- **VI:** Người dùng nhận liên kết đặt lại mật khẩu qua email; liên kết dùng một lần và hết hạn sau 30 phút. Hệ thống không tiết lộ email có tồn tại hay không.
+- **EN:** Users receive a password-reset link by email; the link is single-use and expires after 30 minutes. The system does not reveal whether an email exists.
 
 #### FR-SYS-008 · Xác thực hai lớp / Multi-factor authentication
 `Should` · `P7`
@@ -69,11 +75,21 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../
 - **VI:** Thông báo trong ứng dụng và qua email cho các sự kiện: chờ duyệt, được duyệt/từ chối, chứng từ được giao xử lý, hợp đồng/lô hàng sắp hết hạn, công nợ đến hạn. Người dùng tùy chọn kênh nhận cho từng loại.
 - **EN:** In-app and email notifications for: pending approval, approved/rejected, document assigned, contract/lot nearing expiry, receivable/payable due. Users choose channels per notification type.
 
+#### FR-SYS-029 · Nhật ký kiểm toán / Audit log
+`Must` · `P7`
+
+- **VI:** Ghi nhận mọi thao tác tạo, sửa, xóa, duyệt, hủy, in, xuất dữ liệu, đăng nhập (thành công/thất bại) với: người dùng, thời điểm, IP, giá trị trước – sau. Nhật ký không thể sửa hoặc xóa bởi bất kỳ người dùng nào; tra cứu theo chứng từ, người dùng, khoảng thời gian.
+- **EN:** Record every create, update, delete, approve, cancel, print, export and login (success/failure) action with: user, timestamp, IP, before/after values. The log cannot be edited or deleted by any user; it is searchable by document, user and time range.
+
 **Mở rộng yêu cầu của giai đoạn trước / Extensions to earlier-phase requirements**
 
 | Mã / ID | Mở rộng (VI) | Extension (EN) |
 |---|---|---|
 | FR-SYS-004 | Gán chi nhánh, phòng ban, kho và quỹ được truy cập để áp dụng phạm vi dữ liệu (`FR-SYS-012`). | Assign accessible branches, departments, warehouses and cash funds to drive data scope (`FR-SYS-012`). |
+| FR-SYS-005 | Đăng xuất khỏi tất cả thiết bị. | Sign out of all devices. |
+| FR-SYS-006 | Không trùng 5 mật khẩu gần nhất. Tài khoản bị khóa tạm thời sau 5 lần đăng nhập sai liên tiếp trong 15 phút. Các tham số này cấu hình được. | Passwords must differ from the last 5 passwords. Accounts are temporarily locked after 5 consecutive failed logins within 15 minutes. These parameters are configurable. |
+| FR-SYS-011 | Sao chép vai trò có sẵn để tạo vai trò mới. | Clone an existing role to create a new one. |
+| FR-SYS-031 | Người dùng chuyển ngôn ngữ giao diện VI / EN bất kỳ lúc nào; lựa chọn được lưu theo người dùng. | Users switch the UI language between VI and EN at any time; the choice is saved per user. |
 
 ## 2. Quy tắc nghiệp vụ / Business rules
 

@@ -8,8 +8,8 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P7](../
 
 ## Phạm vi giai đoạn / Phase scope
 
-- **VI:** Gửi email (quên mật khẩu); lưu trữ tệp.
-- **EN:** Email sending (forgot password); file storage.
+- **VI:** Lưu trữ tệp. Gửi email (cho quên mật khẩu) chuyển sang [P7](../phase-07-approvals-controls/11-integrations.md).
+- **EN:** File storage. Email sending (for forgot password) moved to [P7](../phase-07-approvals-controls/11-integrations.md).
 
 ## 1. Mục tiêu / Objectives
 
@@ -20,18 +20,9 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P7](../
 
 | Mã / ID | Hệ thống (VI) | System (EN) | Hướng / Direction | Ưu tiên / Priority | Giai đoạn / Phase |
 |---|---|---|---|---|---|
-| FR-INT-006 | Email | Email | ERP → Ngoài / External | Must | P2 |
 | FR-INT-017 | Lưu trữ tệp | File storage | ERP → kho lưu trữ / storage | Must | P2 |
 
 ## 3. Yêu cầu chức năng / Functional requirements
-
-**Thông báo / Notifications**
-
-#### FR-INT-006 · Email / Email
-`Must` · `P2` (mở rộng / extended: `P7`)
-
-- **VI:** Gửi email qua SMTP hoặc dịch vụ email giao dịch.
-- **EN:** Send email via SMTP or a transactional email service.
 
 **Thuế, API & hạ tầng / Tax, API & infrastructure**
 

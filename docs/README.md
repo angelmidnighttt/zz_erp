@@ -1,7 +1,7 @@
 # Tài liệu dự án ERP / ERP Project Documentation
 
-> **Phiên bản / Version:** 0.5 — Bản nháp / Draft
-> **Ngày / Date:** 2026-10-06
+> **Phiên bản / Version:** 0.7 — Bản nháp / Draft
+> **Ngày / Date:** 2026-10-08
 > **Trạng thái / Status:** Chờ các bên liên quan xem xét / Pending stakeholder review
 
 Bộ tài liệu đặc tả yêu cầu **song ngữ (Tiếng Việt / English)** cho hệ thống ERP. Phạm vi hiện tại **không bao gồm phân hệ Sản xuất (Manufacturing)**; kiến trúc phải cho phép bổ sung phân hệ này về sau.
@@ -35,12 +35,12 @@ docs/
 | Giai đoạn / Phase | Nội dung (VI) | Scope (EN) |
 |---|---|---|
 | [`P1` — Nền tảng](phase-01-foundation/README.md) | Thiết lập dự án & triển khai; người dùng, đăng nhập, đổi mật khẩu, vai trò & quyền theo chức năng × hành động | Project setup & deployment; users, sign-in, password change, roles & function × action permissions |
-| [`P2` — Tổ chức & danh mục](phase-02-organization-master-data/README.md) | Hoàn thiện tài khoản & phân quyền (quên mật khẩu, khóa tài khoản, vai trò nghiệp vụ, nhật ký, VI / EN); doanh nghiệp, chi nhánh, phòng ban, sản phẩm, đối tác, kho, bảng giá | Account & access completion (forgot password, lockout, business roles, audit log, VI / EN); company, branches, departments, products, partners, warehouses, price lists |
+| [`P2` — Tổ chức & danh mục](phase-02-organization-master-data/README.md) | Vai trò nghiệp vụ & ma trận quyền mặc định; doanh nghiệp, chi nhánh, phòng ban, năm tài chính, sản phẩm, đối tác, kho, tiền tệ, thuế, bảng giá; nhập / xuất Excel | Business roles & default permission matrix; company, branches, departments, fiscal years, products, partners, warehouses, currencies, taxes, price lists; Excel import / export |
 | [`P3` — Kho cơ bản](phase-03-inventory/README.md) | Nhập / xuất / chuyển kho, kiểm kê, tính giá, đánh số chứng từ, mẫu in | Receipts / issues / transfers, counts, costing, document numbering, print templates |
 | [`P4` — Mua hàng cơ bản](phase-04-purchasing/README.md) | Đơn mua, nhận hàng, hóa đơn nhà cung cấp, trả hàng | POs, receiving, vendor bills, returns |
 | [`P5` — Bán hàng cơ bản](phase-05-sales/README.md) | Báo giá, đơn bán, giao hàng, hóa đơn, trả hàng | Quotations, orders, deliveries, invoices, returns |
 | [`P6` — Công nợ & thu chi](phase-06-receivables-payables-cash/README.md) | Công nợ phải thu / phải trả, phiếu thu / chi, ngân hàng; **go-live vận hành** | AR / AP, cash receipts / payments, bank; **operations go-live** |
-| [`P7` — Phê duyệt & kiểm soát](phase-07-approvals-controls/README.md) | Luồng duyệt, phạm vi dữ liệu, hạn mức, quyền theo trường, phân tách nhiệm vụ, MFA | Approval flows, data scope, limits, field-level permissions, segregation of duties, MFA |
+| [`P7` — Phê duyệt & kiểm soát](phase-07-approvals-controls/README.md) | Luồng duyệt, phạm vi dữ liệu, hạn mức, quyền theo trường, phân tách nhiệm vụ, MFA; nhật ký kiểm toán, quên mật khẩu, khóa tài khoản, sao chép vai trò | Approval flows, data scope, limits, field-level permissions, segregation of duties, MFA; audit log, forgot password, lockout, role cloning |
 | [`P8` — Hoàn thiện mua – bán – kho](phase-08-operations-completion/README.md) | Lô / serial, giữ hàng, đề nghị mua, báo giá nâng cao | Lots / serials, reservations, purchase requests, advanced quotations |
 | [`P9` — Kế toán đầy đủ & HĐĐT](phase-09-accounting-einvoicing/README.md) | Sổ cái, thuế, BCTC, khóa sổ, tích hợp HĐĐT; **go-live kế toán** | GL, tax, financial statements, period close, e-invoice integration; **accounting go-live** |
 | [`P10` — Mở rộng](phase-10-expansion/README.md) | Nhân sự & tiền lương, CRM, tài sản cố định, khuyến mãi, dashboard nâng cao | HR & payroll, CRM, fixed assets, promotions, advanced dashboards |

@@ -8,8 +8,8 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../
 
 ## Phạm vi giai đoạn / Phase scope
 
-- **VI:** Các vai trò nghiệp vụ mặc định; quyền trên cấu hình, nhật ký và danh mục; sao chép vai trò; ghi nhật ký thay đổi phân quyền.
-- **EN:** The default business roles; permissions on settings, audit log and master data; role cloning; auditing of permission changes.
+- **VI:** Các vai trò nghiệp vụ mặc định; quyền Xem / Tạo / Sửa / Xóa trên cấu hình và danh mục. Sao chép vai trò và ghi nhật ký thay đổi phân quyền chuyển sang [P7](../phase-07-approvals-controls/01-roles-permissions.md).
+- **EN:** The default business roles; View / Create / Edit / Delete permissions on settings and master data. Role cloning and auditing of permission changes moved to [P7](../phase-07-approvals-controls/01-roles-permissions.md).
 
 ## 1. Kiểm tra quyền / Permission check
 
@@ -61,6 +61,8 @@ Ký hiệu / Legend: `V` Xem / View · `C` Tạo / Create · `E` Sửa / Edit ·
 
 - **VI:** Ma trận là cấu hình mặc định khi khởi tạo; quản trị viên có thể thay đổi. Quyền Duyệt trên danh mục được cấp ở [P7](../phase-07-approvals-controls/01-roles-permissions.md) cùng luồng duyệt.
 - **EN:** The matrix is the initial default configuration; administrators can change it. Approve rights on master data are granted in [P7](../phase-07-approvals-controls/01-roles-permissions.md) together with approval flows.
+- **VI:** Dòng `SYS.AUDIT_LOG` đã có trong dữ liệu khởi tạo để không phải sửa ma trận về sau; màn hình nhật ký kiểm toán làm ở [P7](../phase-07-approvals-controls/02-system-administration.md).
+- **EN:** The `SYS.AUDIT_LOG` row is already seeded so the matrix does not change later; the audit-log screen is built in [P7](../phase-07-approvals-controls/02-system-administration.md).
 
 Ví dụ / Example — ô `SAL` × Khách hàng = `VCE` trở thành 3 dòng `role_permissions` / becomes 3 `role_permissions` rows:
 
@@ -81,53 +83,11 @@ Ví dụ / Example — ô `SAL` × Khách hàng = `VCE` trở thành 3 dòng `ro
 - **VI:** Vai trò `ADM` chỉ có quyền cấu hình; không mặc định được xem hay sửa dữ liệu nghiệp vụ (đơn hàng, lương, sổ sách).
 - **EN:** The `ADM` role has configuration rights only; by default it cannot view or edit business data (orders, payroll, ledgers).
 
-#### BR-ROL-006 · Thay đổi phân quyền được ghi nhật ký / Permission changes are audited
-`Must` · `P2`
-
-- **VI:** Mọi thay đổi vai trò, quyền và việc gán vai trò cho người dùng đều được ghi vào nhật ký kiểm toán (người thực hiện, thời điểm, giá trị trước – sau).
-- **EN:** Every change to roles, permissions and user role assignments is written to the audit log (actor, timestamp, before/after values).
-
 | Quy tắc / Rule | Cơ chế (VI) | Mechanism (EN) |
 |---|---|---|
 | BR-ROL-005 | Dữ liệu khởi tạo: `ADM` chỉ có các dòng theo ma trận mục 3, không có quyền trên danh mục nghiệp vụ, chứng từ, lương, sổ sách. | Seed data: `ADM` only has the rows from the section 3 matrix, with no rights on business master data, documents, payroll or ledgers. |
-| BR-ROL-006 | Mọi thay đổi trên `roles`, `role_permissions`, `user_roles` được ghi vào `audit_logs` trong cùng giao dịch. | Every change to `roles`, `role_permissions`, `user_roles` is written to `audit_logs` in the same transaction. |
 
-## 5. Mô hình dữ liệu bổ sung / Data model additions
-
-| Thay đổi / Change | Mục đích (VI) | Purpose (EN) |
-|---|---|---|
-| `roles.cloned_from_id` | Vai trò được sao chép từ vai trò nào (`FR-SYS-011`). | Which role this one was cloned from (`FR-SYS-011`). |
-| `audit_logs` | Nhật ký kiểm toán dùng chung, chỉ ghi thêm (`FR-SYS-029`). | Shared, append-only audit log (`FR-SYS-029`). |
-
-<details>
-<summary>Xem DDL / Show DDL</summary>
-
-```sql
-ALTER TABLE roles
-  ADD COLUMN cloned_from_id uuid REFERENCES roles(id);
-
--- Chỉ ghi thêm: thu hồi UPDATE/DELETE của tài khoản ứng dụng; nên phân vùng theo tháng
--- Append-only: revoke UPDATE/DELETE from the app account; consider monthly partitioning
-CREATE TABLE audit_logs (
-  id              bigint       GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  occurred_at     timestamptz  NOT NULL DEFAULT now(),
-  actor_user_id   uuid         REFERENCES users(id),
-  entity_type     varchar(50)  NOT NULL,
-  entity_id       varchar(100) NOT NULL,
-  operation       varchar(10)  NOT NULL CHECK (operation IN ('INSERT','UPDATE','DELETE')),
-  before_data     jsonb,
-  after_data      jsonb,
-  ip_address      inet,
-  user_agent      text,
-  correlation_id  varchar(64)
-);
-CREATE INDEX ON audit_logs (entity_type, entity_id, occurred_at DESC);
-CREATE INDEX ON audit_logs (actor_user_id, occurred_at DESC);
-```
-
-</details>
-
-## 6. Câu hỏi mở / Open questions
+## 5. Câu hỏi mở / Open questions
 
 | # | Câu hỏi (VI) | Question (EN) |
 |---|---|---|

@@ -8,8 +8,10 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../
 
 ## Phạm vi giai đoạn / Phase scope
 
-- **VI:** Quên mật khẩu, khóa tài khoản, lịch sử mật khẩu, đăng xuất mọi thiết bị; sao chép vai trò; nhật ký kiểm toán; VI / EN. Thông tin doanh nghiệp, chi nhánh, phòng ban; liên kết người dùng với nhân viên; tham số hệ thống; đính kèm, nhập / xuất Excel, tìm kiếm.
-- **EN:** Forgot password, lockout, password history, sign-out from all devices; role cloning; audit log; VI / EN. Company profile, branches, departments; linking users to employees; system parameters; attachments, Excel import / export, search.
+- **VI:** Thông tin doanh nghiệp, chi nhánh, phòng ban; liên kết người dùng với nhân viên; tham số hệ thống; tên tiếng Anh trên danh mục; đính kèm, nhập / xuất Excel, tìm kiếm.
+- **EN:** Company profile, branches, departments; linking users to employees; system parameters; English names on master data; attachments, Excel import / export, search.
+- **VI:** Chuyển sang [P7](../phase-07-approvals-controls/02-system-administration.md): quên mật khẩu (`FR-SYS-007`), khóa tài khoản & lịch sử mật khẩu, đăng xuất mọi thiết bị, sao chép vai trò, nhật ký kiểm toán (`FR-SYS-029`), chuyển ngôn ngữ giao diện theo người dùng.
+- **EN:** Moved to [P7](../phase-07-approvals-controls/02-system-administration.md): forgot password (`FR-SYS-007`), lockout & password history, sign-out from all devices, role cloning, audit log (`FR-SYS-029`), per-user UI language switching.
 
 ## 1. Mục tiêu / Objectives
 
@@ -17,14 +19,6 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../
 - **EN:** Provide the shared foundation for all modules: organization structure, users, authentication, authorization, approval workflows, document numbering, print templates, notifications, data import/export and audit logging.
 
 ## 2. Yêu cầu chức năng / Functional requirements
-
-**Người dùng & xác thực / Users & authentication**
-
-#### FR-SYS-007 · Quên mật khẩu / Forgot password
-`Must` · `P2`
-
-- **VI:** Người dùng nhận liên kết đặt lại mật khẩu qua email; liên kết dùng một lần và hết hạn sau 30 phút. Hệ thống không tiết lộ email có tồn tại hay không.
-- **EN:** Users receive a password-reset link by email; the link is single-use and expires after 30 minutes. The system does not reveal whether an email exists.
 
 **Cơ cấu tổ chức / Organization structure**
 
@@ -80,26 +74,17 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../
 - **VI:** Tìm nhanh theo mã / tên; lọc theo các trường chính. Tìm kiếm tiếng Việt không phân biệt dấu (gõ "nguyen" tìm được "Nguyễn").
 - **EN:** Quick search by code / name; filters on key fields. Vietnamese search is accent-insensitive (typing "nguyen" finds "Nguyễn").
 
-#### FR-SYS-029 · Nhật ký kiểm toán / Audit log
-`Must` · `P2`
+#### FR-SYS-031 · Ngôn ngữ VI / EN / VI / EN language
+`Must` · `P2` (mở rộng / extended: `P7`)
 
-- **VI:** Ghi nhận mọi thao tác tạo, sửa, xóa, duyệt, hủy, in, xuất dữ liệu, đăng nhập (thành công/thất bại) với: người dùng, thời điểm, IP, giá trị trước – sau. Nhật ký không thể sửa hoặc xóa bởi bất kỳ người dùng nào; tra cứu theo chứng từ, người dùng, khoảng thời gian.
-- **EN:** Record every create, update, delete, approve, cancel, print, export and login (success/failure) action with: user, timestamp, IP, before/after values. The log cannot be edited or deleted by any user; it is searchable by document, user and time range.
-
-#### FR-SYS-031 · Chuyển đổi ngôn ngữ / Language switching
-`Must` · `P2`
-
-- **VI:** Người dùng chuyển ngôn ngữ giao diện VI/EN bất kỳ lúc nào; lựa chọn được lưu theo người dùng. Danh mục chính có trường tên tiếng Anh để in chứng từ tiếng Anh.
-- **EN:** Users switch the UI language between VI and EN at any time; the choice is saved per user. Key master data has an English-name field for English printouts.
+- **VI:** Danh mục chính (sản phẩm, đối tác, đơn vị tính, kho, thuế suất, phương thức thanh toán…) có trường tên tiếng Anh để in chứng từ tiếng Anh. Giao diện hiển thị theo ngôn ngữ mặc định trong tham số hệ thống (`FR-SYS-020`).
+- **EN:** Key master data (products, partners, units of measure, warehouses, tax codes, payment methods…) has an English-name field for English printouts. The UI is shown in the default language from the system parameters (`FR-SYS-020`).
 
 **Mở rộng yêu cầu của giai đoạn trước / Extensions to earlier-phase requirements**
 
 | Mã / ID | Mở rộng (VI) | Extension (EN) |
 |---|---|---|
 | FR-SYS-004 | Liên kết người dùng với hồ sơ nhân viên (`FR-MDM-022`). | Link users to employee records (`FR-MDM-022`). |
-| FR-SYS-005 | Đăng xuất khỏi tất cả thiết bị. | Sign out of all devices. |
-| FR-SYS-006 | Không trùng 5 mật khẩu gần nhất. Tài khoản bị khóa tạm thời sau 5 lần đăng nhập sai liên tiếp trong 15 phút. Các tham số này cấu hình được. | Passwords must differ from the last 5 passwords. Accounts are temporarily locked after 5 consecutive failed logins within 15 minutes. These parameters are configurable. |
-| FR-SYS-011 | Sao chép vai trò có sẵn để tạo vai trò mới. | Clone an existing role to create a new one. |
 
 ## 3. Quy tắc nghiệp vụ / Business rules
 

@@ -8,13 +8,15 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P2](../
 
 ## Phạm vi giai đoạn / Phase scope
 
-- **VI:** Cấu hình tên miền gửi email, theo dõi trạng thái gửi (cho thông báo).
-- **EN:** Email sending domain, delivery tracking (for notifications).
+- **VI:** Gửi email (quên mật khẩu, thông báo); cấu hình tên miền gửi, theo dõi trạng thái gửi.
+- **EN:** Email sending (forgot password, notifications); sending domain, delivery tracking.
 
 ## 1. Yêu cầu chức năng / Functional requirements
 
-**Mở rộng yêu cầu của giai đoạn trước / Extensions to earlier-phase requirements**
+**Thông báo / Notifications**
 
-| Mã / ID | Mở rộng (VI) | Extension (EN) |
-|---|---|---|
-| FR-INT-006 | Cấu hình tên miền gửi (SPF, DKIM); theo dõi trạng thái gửi và gửi lại khi lỗi. | Configure the sending domain (SPF, DKIM); track delivery status and retry on failure. |
+#### FR-INT-006 · Email / Email
+`Must` · `P7`
+
+- **VI:** Gửi email qua SMTP hoặc dịch vụ email giao dịch; cấu hình tên miền gửi (SPF, DKIM); theo dõi trạng thái gửi và gửi lại khi lỗi.
+- **EN:** Send email via SMTP or a transactional email service; configure the sending domain (SPF, DKIM); track delivery status and retry on failure.

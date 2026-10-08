@@ -8,8 +8,8 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../
 
 ## Phạm vi giai đoạn / Phase scope
 
-- **VI:** Phạm vi dữ liệu (của tôi, toàn công ty, phòng ban, chi nhánh, kho / quỹ được gán); quyền Duyệt trên danh mục; quyền theo trường; hạn mức theo vai trò hoặc người dùng; quy tắc phân tách nhiệm vụ.
-- **EN:** Data scope (own, whole company, department, branch, assigned warehouse / cash fund); approve rights on master data; field-level permissions; limits per role or user; segregation-of-duties rules.
+- **VI:** Phạm vi dữ liệu (của tôi, toàn công ty, phòng ban, chi nhánh, kho / quỹ được gán); quyền Duyệt trên danh mục; quyền theo trường; hạn mức theo vai trò hoặc người dùng; quy tắc phân tách nhiệm vụ; sao chép vai trò và ghi nhật ký thay đổi phân quyền (chuyển từ P2).
+- **EN:** Data scope (own, whole company, department, branch, assigned warehouse / cash fund); approve rights on master data; field-level permissions; limits per role or user; segregation-of-duties rules; role cloning and auditing of permission changes (moved from P2).
 
 ## 1. Mô hình phân quyền bổ sung / Permission model additions
 
@@ -72,7 +72,7 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../
 - **VI:** Quy tắc 1, 2 xem [P1](../phase-01-foundation/01-roles-permissions.md).
 - **EN:** Rules 1 and 2 are in [P1](../phase-01-foundation/01-roles-permissions.md).
 
-## 2. Quy tắc phân tách nhiệm vụ / Segregation-of-duties rules
+## 2. Quy tắc nghiệp vụ / Business rules
 
 #### BR-ROL-001 · Không tự duyệt / No self-approval
 `Must` · `P7`
@@ -92,12 +92,18 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../
 - **VI:** Người sửa tài khoản ngân hàng của nhà cung cấp không được duyệt thanh toán cho nhà cung cấp đó trong cùng kỳ.
 - **EN:** A user who changes a supplier's bank account cannot approve payments to that supplier within the same period.
 
+#### BR-ROL-006 · Thay đổi phân quyền được ghi nhật ký / Permission changes are audited
+`Must` · `P7`
+
+- **VI:** Mọi thay đổi vai trò, quyền, việc gán vai trò cho người dùng và các thiết lập kiểm soát (phạm vi dữ liệu, quyền theo trường, hạn mức, phân tách nhiệm vụ) đều được ghi vào nhật ký kiểm toán (người thực hiện, thời điểm, giá trị trước – sau).
+- **EN:** Every change to roles, permissions, user role assignments and control settings (data scope, field-level permissions, limits, segregation of duties) is written to the audit log (actor, timestamp, before/after values).
+
 | Quy tắc / Rule | Cơ chế (VI) | Mechanism (EN) |
 |---|---|---|
 | BR-ROL-001 | Kiểm tra khi duyệt: người duyệt ≠ `created_by` của chứng từ. | Checked at approval: approver ≠ the document's `created_by`. |
 | BR-ROL-002 | `sod_rules`: `CSH` × `ACC.JOURNAL_ENTRY` (`CREATE`, `EDIT`) và `CSH` × `ACC.CASH_VOUCHER` (`APPROVE`). | `sod_rules`: `CSH` × `ACC.JOURNAL_ENTRY` (`CREATE`, `EDIT`) and `CSH` × `ACC.CASH_VOUCHER` (`APPROVE`). |
 | BR-ROL-003 | Kiểm tra khi duyệt chi: tra `audit_logs` các thay đổi tài khoản ngân hàng của NCC trong kỳ; người sửa ≠ người duyệt. | Checked at payment approval: look up the supplier's bank-account changes in `audit_logs` for the period; editor ≠ approver. |
-| BR-ROL-006 | Mở rộng từ P2: thay đổi trên `user_access_grants`, `role_field_grants`, `authorization_limits`, `sod_rules` cũng được ghi vào `audit_logs` trong cùng giao dịch. | Extended from P2: changes to `user_access_grants`, `role_field_grants`, `authorization_limits`, `sod_rules` are also written to `audit_logs` in the same transaction. |
+| BR-ROL-006 | Mọi thay đổi trên `roles`, `role_permissions`, `user_roles`, `user_access_grants`, `role_field_grants`, `authorization_limits`, `sod_rules` được ghi vào `audit_logs` trong cùng giao dịch. | Every change to `roles`, `role_permissions`, `user_roles`, `user_access_grants`, `role_field_grants`, `authorization_limits`, `sod_rules` is written to `audit_logs` in the same transaction. |
 
 ## 3. Mô hình dữ liệu bổ sung / Data model additions
 
@@ -112,10 +118,14 @@ erDiagram
     app_functions ||--o{ authorization_limits : "on"
     roles ||--o{ sod_rules : "restricted by"
     app_functions ||--o{ sod_rules : "on"
+    roles |o--o{ roles : "cloned from"
+    users |o--o{ audit_logs : "acts in"
 ```
 
 | Thay đổi / Change | Mục đích (VI) | Purpose (EN) |
 |---|---|---|
+| `roles.cloned_from_id` | Vai trò được sao chép từ vai trò nào (`FR-SYS-011`). | Which role this one was cloned from (`FR-SYS-011`). |
+| `audit_logs` | Nhật ký kiểm toán dùng chung, chỉ ghi thêm (`FR-SYS-029`). | Shared, append-only audit log (`FR-SYS-029`). |
 | `roles.default_data_scope` | Phạm vi mặc định của vai trò. | The role's default scope. |
 | `role_permissions.data_scope` | Phạm vi riêng của một ô quyền; để trống thì dùng phạm vi mặc định của vai trò. | Scope of one permission cell; empty falls back to the role's default scope. |
 | `user_access_grants` | Chi nhánh, phòng ban, kho, quỹ mà người dùng được truy cập; dùng để tính phạm vi dữ liệu. | Branches, departments, warehouses and cash funds a user may access; used to evaluate data scope. |
@@ -196,6 +206,27 @@ CREATE TABLE sod_rules (
   is_active      boolean           NOT NULL DEFAULT true,
   UNIQUE (role_id, function_code, action)
 );
+
+ALTER TABLE roles
+  ADD COLUMN cloned_from_id uuid REFERENCES roles(id);
+
+-- Chỉ ghi thêm: thu hồi UPDATE/DELETE của tài khoản ứng dụng; nên phân vùng theo tháng
+-- Append-only: revoke UPDATE/DELETE from the app account; consider monthly partitioning
+CREATE TABLE audit_logs (
+  id              bigint       GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  occurred_at     timestamptz  NOT NULL DEFAULT now(),
+  actor_user_id   uuid         REFERENCES users(id),
+  entity_type     varchar(50)  NOT NULL,
+  entity_id       varchar(100) NOT NULL,
+  operation       varchar(10)  NOT NULL CHECK (operation IN ('INSERT','UPDATE','DELETE')),
+  before_data     jsonb,
+  after_data      jsonb,
+  ip_address      inet,
+  user_agent      text,
+  correlation_id  varchar(64)
+);
+CREATE INDEX ON audit_logs (entity_type, entity_id, occurred_at DESC);
+CREATE INDEX ON audit_logs (actor_user_id, occurred_at DESC);
 ```
 
 </details>

@@ -8,8 +8,8 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P2](../
 
 ## Phạm vi giai đoạn / Phase scope
 
-- **VI:** Duyệt thay đổi thông tin nhạy cảm và thay đổi bảng giá; giá bán tối thiểu.
-- **EN:** Approval of sensitive changes and price list changes; minimum selling price.
+- **VI:** Duyệt thay đổi thông tin nhạy cảm và thay đổi bảng giá; giá bán tối thiểu; lịch sử thay đổi danh mục (chuyển từ P2).
+- **EN:** Approval of sensitive changes and price list changes; minimum selling price; master-data change history (moved from P2).
 
 ## 1. Yêu cầu chức năng / Functional requirements
 
@@ -20,6 +20,14 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P2](../
 
 - **VI:** Thay đổi tài khoản ngân hàng nhà cung cấp hoặc tăng hạn mức công nợ khách hàng phải được duyệt trước khi có hiệu lực.
 - **EN:** Changes to supplier bank accounts or increases to customer credit limits require approval before taking effect.
+
+**Lịch sử thay đổi / Change history**
+
+#### FR-MDM-024 · Lịch sử thay đổi danh mục / Master data change history
+`Must` · `P7`
+
+- **VI:** Xem lịch sử thay đổi của từng bản ghi danh mục (ai, khi nào, trường nào, giá trị trước – sau) — dùng chung nhật ký kiểm toán `FR-SYS-029`.
+- **EN:** View the change history of each master record (who, when, which field, before/after) — uses the shared audit log `FR-SYS-029`.
 
 **Bảng giá / Price lists**
 

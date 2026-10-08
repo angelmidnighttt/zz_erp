@@ -116,12 +116,6 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P7](../
 - **VI:** Danh mục nhân viên tối thiểu (mã, tên, phòng ban, chức danh, email, điện thoại) dùng cho nhân viên bán hàng, người nhận hàng, tạm ứng… Hồ sơ đầy đủ quản lý ở phân hệ Nhân sự (P10).
 - **EN:** Minimal employee list (code, name, department, title, email, phone) used for salespeople, recipients, advances… Full records are managed in the HR module (P10).
 
-#### FR-MDM-024 · Lịch sử thay đổi danh mục / Master data change history
-`Must` · `P2`
-
-- **VI:** Xem lịch sử thay đổi của từng bản ghi danh mục (ai, khi nào, trường nào, giá trị trước – sau) — dùng chung nhật ký kiểm toán `FR-SYS-029`.
-- **EN:** View the change history of each master record (who, when, which field, before/after) — uses the shared audit log `FR-SYS-029`.
-
 **Bảng giá / Price lists**
 
 #### FR-MDM-025 · Bảng giá bán / Sales price lists
