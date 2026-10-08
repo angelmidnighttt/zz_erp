@@ -24,3 +24,34 @@ Ký hiệu / Legend: `V` Xem / View · `C` Tạo / Create · `E` Sửa / Edit ·
 
 - **VI:** Ma trận là cấu hình mặc định khi khởi tạo; quản trị viên có thể thay đổi. Ô có `A` chỉ có tác dụng từ khi có luồng duyệt (P7).
 - **EN:** The matrix is the initial default configuration; administrators can change it. Cells with `A` only take effect once approval flows exist (P7).
+
+## 3. Mô hình dữ liệu / Data model
+
+- **VI:** Không đổi lược đồ; nạp chức năng và ma trận mục 1. Chuyển tiền nội bộ dùng chức năng `ACC.BANK_TXN`.
+- **EN:** No schema change; the section 1 functions and matrix are seeded. Internal transfers use the `ACC.BANK_TXN` function.
+
+<details>
+<summary>Xem DDL / Show DDL</summary>
+
+```sql
+-- Chạy sau / Run after: P5
+
+INSERT INTO app_functions (code, module, name_vi, name_en, supported_actions, sort_order) VALUES
+  ('ACC.CASH_VOUCHER', 'ACC', 'Phiếu thu / chi tiền mặt', 'Cash receipts & payments', '{VIEW,CREATE,EDIT,DELETE,APPROVE}', 730),
+  ('ACC.BANK_TXN',     'ACC', 'Giao dịch ngân hàng',      'Bank transactions',        '{VIEW,CREATE,EDIT,DELETE,APPROVE}', 740)
+ON CONFLICT (code) DO NOTHING;
+
+INSERT INTO role_permissions (role_id, function_code, action)
+SELECT r.id, m.function_code, a
+FROM (VALUES
+  ('ACC.CASH_VOUCHER', 'CEO', 'VA'),  ('ACC.CASH_VOUCHER', 'ACC', 'VCE'), ('ACC.CASH_VOUCHER', 'CAC', 'VCEDA'),
+  ('ACC.CASH_VOUCHER', 'CSH', 'VCE'), ('ACC.CASH_VOUCHER', 'AUD', 'V'),
+  ('ACC.BANK_TXN',     'CEO', 'VA'),  ('ACC.BANK_TXN',     'ACC', 'VCE'), ('ACC.BANK_TXN',     'CAC', 'VCEDA'),
+  ('ACC.BANK_TXN',     'AUD', 'V')
+) AS m(function_code, role_code, letters)
+JOIN roles r ON r.code = m.role_code
+CROSS JOIN LATERAL perm_letters(m.letters) AS a
+ON CONFLICT DO NOTHING;
+```
+
+</details>

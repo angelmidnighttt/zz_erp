@@ -87,7 +87,81 @@ Ví dụ / Example — ô `SAL` × Khách hàng = `VCE` trở thành 3 dòng `ro
 |---|---|---|
 | BR-ROL-005 | Dữ liệu khởi tạo: `ADM` chỉ có các dòng theo ma trận mục 3, không có quyền trên danh mục nghiệp vụ, chứng từ, lương, sổ sách. | Seed data: `ADM` only has the rows from the section 3 matrix, with no rights on business master data, documents, payroll or ledgers. |
 
-## 5. Câu hỏi mở / Open questions
+## 5. Mô hình dữ liệu / Data model
+
+- **VI:** Không đổi lược đồ của [P1](../phase-01-foundation/01-roles-permissions.md). Giai đoạn này chỉ nạp dữ liệu khởi tạo: vai trò mục 2, chức năng và ma trận mục 3. Hàm `perm_letters` đổi chuỗi ký hiệu của ma trận (`'VCE'`) thành các hành động, dùng lại cho seed ở các giai đoạn sau. Seed chạy được nhiều lần (`ON CONFLICT`), không ghi đè quyền quản trị viên đã sửa.
+- **EN:** No schema change from [P1](../phase-01-foundation/01-roles-permissions.md). This phase only seeds data: the section 2 roles, the section 3 functions and matrix. The `perm_letters` function turns a matrix cell (`'VCE'`) into actions and is reused by later phases' seeds. Seeds are re-runnable (`ON CONFLICT`) and never overwrite permissions changed by administrators.
+
+<details>
+<summary>Xem DDL / Show DDL</summary>
+
+```sql
+-- Chạy sau / Run after: P1; 02-system-administration.md (P2)
+
+-- 'VCEDA' → {VIEW, CREATE, EDIT, DELETE, APPROVE}; ký hiệu lạ → NULL → INSERT lỗi NOT NULL
+-- Unknown letters → NULL → the INSERT fails on NOT NULL
+CREATE FUNCTION perm_letters(p_letters text) RETURNS SETOF permission_action
+LANGUAGE sql IMMUTABLE STRICT AS $$
+  SELECT (CASE ch
+            WHEN 'V' THEN 'VIEW'   WHEN 'C' THEN 'CREATE' WHEN 'E' THEN 'EDIT'
+            WHEN 'D' THEN 'DELETE' WHEN 'A' THEN 'APPROVE'
+          END)::permission_action
+  FROM regexp_split_to_table(p_letters, '') AS ch
+$$;
+
+INSERT INTO roles (code, name_vi, name_en, is_system) VALUES
+  ('CEO', 'Ban giám đốc',                    'Executive',            true),
+  ('SAL', 'Nhân viên kinh doanh',            'Sales staff',          true),
+  ('SLM', 'Trưởng phòng kinh doanh',         'Sales manager',        true),
+  ('PUR', 'Nhân viên mua hàng',              'Purchasing staff',     true),
+  ('PUM', 'Trưởng phòng mua hàng',           'Purchasing manager',   true),
+  ('WH',  'Thủ kho',                         'Warehouse keeper',     true),
+  ('WHM', 'Quản lý kho',                     'Warehouse manager',    true),
+  ('ACC', 'Kế toán viên',                    'Accountant',           true),
+  ('CAC', 'Kế toán trưởng',                  'Chief accountant',     true),
+  ('CSH', 'Thủ quỹ',                         'Cashier',              true),
+  ('AUD', 'Kiểm soát / Kiểm toán (chỉ xem)', 'Auditor (read-only)',  true)
+ON CONFLICT (code) DO NOTHING;
+
+INSERT INTO app_functions (code, module, name_vi, name_en, supported_actions, sort_order) VALUES
+  ('SYS.SETTINGS',   'SYS', 'Cấu hình hệ thống', 'System settings', '{VIEW,CREATE,EDIT}',        20),
+  ('SYS.AUDIT_LOG',  'SYS', 'Nhật ký hệ thống',  'Audit log',       '{VIEW}',                    30),
+  ('MDM.PRODUCT',    'MDM', 'Sản phẩm',          'Products',        '{VIEW,CREATE,EDIT,DELETE}', 110),
+  ('MDM.CUSTOMER',   'MDM', 'Khách hàng',        'Customers',       '{VIEW,CREATE,EDIT,DELETE}', 120),
+  ('MDM.SUPPLIER',   'MDM', 'Nhà cung cấp',      'Suppliers',       '{VIEW,CREATE,EDIT,DELETE}', 130),
+  ('MDM.PRICE_LIST', 'MDM', 'Bảng giá bán',      'Price lists',     '{VIEW,CREATE,EDIT,DELETE}', 140)
+ON CONFLICT (code) DO NOTHING;
+
+-- Ma trận mục 3; ô "—" không có dòng / Section 3 matrix; "—" cells have no row
+INSERT INTO role_permissions (role_id, function_code, action)
+SELECT r.id, m.function_code, a
+FROM (VALUES
+  ('SYS.USER_ROLE',  'AUD', 'V'),
+  ('SYS.SETTINGS',   'ADM', 'VCE'), ('SYS.SETTINGS',   'CEO', 'V'),   ('SYS.SETTINGS',   'CAC', 'V'),
+  ('SYS.SETTINGS',   'AUD', 'V'),
+  ('SYS.AUDIT_LOG',  'ADM', 'V'),   ('SYS.AUDIT_LOG',  'CEO', 'V'),   ('SYS.AUDIT_LOG',  'CAC', 'V'),
+  ('SYS.AUDIT_LOG',  'AUD', 'V'),
+  ('MDM.PRODUCT',    'ADM', 'V'),   ('MDM.PRODUCT',    'CEO', 'V'),   ('MDM.PRODUCT',    'SAL', 'V'),
+  ('MDM.PRODUCT',    'SLM', 'V'),   ('MDM.PRODUCT',    'PUR', 'VCE'), ('MDM.PRODUCT',    'PUM', 'VCE'),
+  ('MDM.PRODUCT',    'WH',  'V'),   ('MDM.PRODUCT',    'WHM', 'VCE'), ('MDM.PRODUCT',    'ACC', 'V'),
+  ('MDM.PRODUCT',    'CAC', 'VE'),  ('MDM.PRODUCT',    'AUD', 'V'),
+  ('MDM.CUSTOMER',   'CEO', 'V'),   ('MDM.CUSTOMER',   'SAL', 'VCE'), ('MDM.CUSTOMER',   'SLM', 'VCE'),
+  ('MDM.CUSTOMER',   'ACC', 'V'),   ('MDM.CUSTOMER',   'CAC', 'VE'),  ('MDM.CUSTOMER',   'CSH', 'V'),
+  ('MDM.CUSTOMER',   'AUD', 'V'),
+  ('MDM.SUPPLIER',   'CEO', 'V'),   ('MDM.SUPPLIER',   'PUR', 'VCE'), ('MDM.SUPPLIER',   'PUM', 'VCE'),
+  ('MDM.SUPPLIER',   'ACC', 'V'),   ('MDM.SUPPLIER',   'CAC', 'VE'),  ('MDM.SUPPLIER',   'CSH', 'V'),
+  ('MDM.SUPPLIER',   'AUD', 'V'),
+  ('MDM.PRICE_LIST', 'CEO', 'V'),   ('MDM.PRICE_LIST', 'SAL', 'V'),   ('MDM.PRICE_LIST', 'SLM', 'VCE'),
+  ('MDM.PRICE_LIST', 'ACC', 'V'),   ('MDM.PRICE_LIST', 'CAC', 'V'),   ('MDM.PRICE_LIST', 'AUD', 'V')
+) AS m(function_code, role_code, letters)
+JOIN roles r ON r.code = m.role_code
+CROSS JOIN LATERAL perm_letters(m.letters) AS a
+ON CONFLICT DO NOTHING;
+```
+
+</details>
+
+## 6. Câu hỏi mở / Open questions
 
 | # | Câu hỏi (VI) | Question (EN) |
 |---|---|---|

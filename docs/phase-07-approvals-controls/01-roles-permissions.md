@@ -145,6 +145,8 @@ erDiagram
 <summary>Xem DDL / Show DDL</summary>
 
 ```sql
+-- Chạy sau / Run after: P6
+
 CREATE TYPE data_scope AS ENUM ('OWN','ALL','DEPARTMENT','BRANCH','ASSIGNED');
 
 ALTER TABLE roles
@@ -218,7 +220,10 @@ CREATE TABLE audit_logs (
   actor_user_id   uuid         REFERENCES users(id),
   entity_type     varchar(50)  NOT NULL,
   entity_id       varchar(100) NOT NULL,
-  operation       varchar(10)  NOT NULL CHECK (operation IN ('INSERT','UPDATE','DELETE')),
+  -- FR-SYS-029: ghi cả duyệt, hủy, in, xuất, đăng nhập; VIEW cho truy cập dữ liệu nhạy cảm (NFR-PRV-002, BR-HRM-001)
+  -- FR-SYS-029: also approvals, cancellations, prints, exports, logins; VIEW for sensitive-data access (NFR-PRV-002, BR-HRM-001)
+  operation       varchar(20)  NOT NULL CHECK (operation IN ('INSERT','UPDATE','DELETE','APPROVE','REJECT','CANCEL',
+                                                             'PRINT','EXPORT','VIEW','LOGIN','LOGIN_FAILED','LOGOUT')),
   before_data     jsonb,
   after_data      jsonb,
   ip_address      inet,
@@ -227,6 +232,96 @@ CREATE TABLE audit_logs (
 );
 CREATE INDEX ON audit_logs (entity_type, entity_id, occurred_at DESC);
 CREATE INDEX ON audit_logs (actor_user_id, occurred_at DESC);
+```
+
+</details>
+
+**Cột phạm vi dữ liệu & dữ liệu khởi tạo / Data-scope columns & seed**
+
+| Thay đổi / Change | Mục đích (VI) | Purpose (EN) |
+|---|---|---|
+| `owner_id`, `department_id` trên bảng chứng từ P3 – P6 | Cột lọc cho phạm vi `OWN` / `DEPARTMENT`; dữ liệu cũ lấy `owner_id` = `created_by`, `department_id` = phòng ban của nhân viên gắn với người phụ trách. | Filter columns for the `OWN` / `DEPARTMENT` scopes; existing rows take `owner_id` = `created_by` and `department_id` = the owner's employee department. |
+| `partners.owner_id` | Người phụ trách đối tác (phạm vi `OWN` trên danh mục khách hàng / nhà cung cấp). | Partner owner (`OWN` scope on customers / suppliers). |
+| `v_user_permissions` | Quyền hiệu lực theo người dùng, kèm phạm vi đã quy về mặc định của vai trò (quy tắc 1 – 3). | Effective permissions per user, with scope resolved to the role default (rules 1 – 3). |
+| `user_access_ids(user, loại)` | Danh sách chi nhánh / phòng ban (kể cả phòng ban con) / kho / quỹ được gán, dùng để dựng điều kiện lọc. | Assigned branches / departments (including sub-departments) / warehouses / cash funds, used to build scope filters. |
+| Seed | Phạm vi mặc định của vai trò, quyền Duyệt trên danh mục, quy tắc `BR-ROL-002` phần phiếu chi (phần bút toán thêm ở P9 khi có `ACC.JOURNAL_ENTRY`). | Default role scopes, Approve rights on master data, the cash-payment part of `BR-ROL-002` (the journal-entry part is added in P9 with `ACC.JOURNAL_ENTRY`). |
+
+<details>
+<summary>Xem DDL / Show DDL</summary>
+
+```sql
+-- Chạy sau / Run after: khối DDL ở trên / the DDL block above
+
+DO $$
+DECLARE t text;
+BEGIN
+  FOREACH t IN ARRAY ARRAY['quotations','sales_orders','customer_invoices','sales_returns',
+                           'purchase_orders','vendor_bills','purchase_returns',
+                           'stock_documents','stock_counts','cash_documents'] LOOP
+    EXECUTE format('ALTER TABLE %I ADD COLUMN owner_id uuid REFERENCES users(id),
+                                   ADD COLUMN department_id uuid REFERENCES departments(id)', t);
+    EXECUTE format('UPDATE %I SET owner_id = created_by', t);
+    EXECUTE format('UPDATE %I x SET department_id = e.department_id
+                      FROM users u JOIN employees e ON e.id = u.employee_id
+                     WHERE u.id = x.owner_id', t);
+    EXECUTE format('CREATE INDEX ON %I (owner_id)', t);
+    EXECUTE format('CREATE INDEX ON %I (department_id)', t);
+  END LOOP;
+END $$;
+
+ALTER TABLE partners ADD COLUMN owner_id uuid REFERENCES users(id);
+UPDATE partners SET owner_id = created_by;
+
+-- Quy tắc 1 – 3: vai trò đang hoạt động, phạm vi ô quyền rơi về phạm vi mặc định của vai trò
+-- Rules 1 – 3: active roles only; a cell's scope falls back to the role default
+CREATE VIEW v_user_permissions AS
+SELECT ur.user_id, rp.function_code, rp.action, r.id AS role_id, r.code AS role_code,
+       coalesce(rp.data_scope, r.default_data_scope) AS data_scope
+FROM user_roles ur
+JOIN roles r             ON r.id = ur.role_id AND r.is_active
+JOIN role_permissions rp ON rp.role_id = r.id;
+
+-- DEPARTMENT gồm cả phòng ban con / DEPARTMENT includes sub-departments
+CREATE FUNCTION user_access_ids(p_user_id uuid, p_type access_object_type)
+RETURNS SETOF uuid
+LANGUAGE sql STABLE AS $$
+  WITH RECURSIVE granted AS (
+    SELECT g.object_id FROM user_access_grants g
+    WHERE g.user_id = p_user_id AND g.object_type = p_type
+  ),
+  dept_tree AS (
+    SELECT d.id FROM departments d WHERE p_type = 'DEPARTMENT' AND d.id IN (SELECT object_id FROM granted)
+    UNION
+    SELECT c.id FROM departments c JOIN dept_tree t ON c.parent_id = t.id
+  )
+  SELECT object_id FROM granted WHERE p_type <> 'DEPARTMENT'
+  UNION
+  SELECT id FROM dept_tree
+$$;
+
+-- Phạm vi mặc định (mục 1) / Default scopes (section 1)
+UPDATE roles r SET default_data_scope = v.scope::data_scope
+FROM (VALUES ('ADM','ALL'), ('CEO','ALL'), ('SAL','OWN'), ('SLM','DEPARTMENT'), ('PUR','DEPARTMENT'),
+             ('PUM','ALL'), ('WH','ASSIGNED'), ('WHM','BRANCH'), ('ACC','ALL'), ('CAC','ALL'),
+             ('CSH','ASSIGNED'), ('AUD','ALL')) AS v(code, scope)
+WHERE r.code = v.code;
+
+-- Quyền Duyệt trên danh mục / Approve rights on master data
+UPDATE app_functions SET supported_actions = array_append(supported_actions, 'APPROVE')
+WHERE code IN ('MDM.PRODUCT','MDM.CUSTOMER','MDM.SUPPLIER','MDM.PRICE_LIST')
+  AND NOT ('APPROVE' = ANY (supported_actions));
+
+INSERT INTO role_permissions (role_id, function_code, action)
+SELECT r.id, m.function_code, 'APPROVE'
+FROM (VALUES ('MDM.PRODUCT','PUM'), ('MDM.CUSTOMER','SLM'), ('MDM.SUPPLIER','PUM'), ('MDM.PRICE_LIST','CEO'))
+       AS m(function_code, role_code)
+JOIN roles r ON r.code = m.role_code
+ON CONFLICT DO NOTHING;
+
+-- BR-ROL-002 (phần phiếu chi / cash-payment part)
+INSERT INTO sod_rules (rule_code, role_id, function_code, action)
+SELECT 'BR-ROL-002', r.id, 'ACC.CASH_VOUCHER', 'APPROVE' FROM roles r WHERE r.code = 'CSH'
+ON CONFLICT DO NOTHING;
 ```
 
 </details>

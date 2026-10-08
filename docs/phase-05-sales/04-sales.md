@@ -182,7 +182,324 @@ flowchart LR
 | BR-SAL-005 | Doanh thu bằng ngoại tệ được quy đổi sang VND theo tỷ giá giao dịch thực tế tại thời điểm ghi nhận doanh thu. | Foreign-currency revenue is converted to VND at the actual transaction rate on the recognition date. | P5 |
 | BR-SAL-006 | Thành tiền VND làm tròn đến đơn vị đồng; phương pháp làm tròn tiền thuế (theo dòng hoặc theo tổng) cấu hình được và phải khớp với nhà cung cấp HĐĐT. | VND amounts are rounded to whole đồng; tax rounding (per line or per total) is configurable and must match the e-invoice provider. | P5 |
 
-## 7. Câu hỏi mở / Open questions
+## 7. Mô hình dữ liệu / Data model
+
+- **VI:** Đơn đã xác nhận tự sinh phiếu xuất `stock_documents` (`reason = 'SALE'`, `status = 'WAITING'`, `source_type = 'sales_order'`) — `FR-SAL-019`; xác nhận phiếu xuất cập nhật `sales_order_lines.qty_delivered`. Hóa đơn có thể gộp nhiều phiếu xuất của cùng khách hàng nên liên kết ở mức dòng (`issue_line_id`). Ở P5, số HĐĐT phát hành trên cổng nhà cung cấp được ghi tay vào `einvoice_series` / `einvoice_no`; P9 chuyển sang phát hành trực tiếp. Phương pháp làm tròn thuế (`BR-SAL-006`) lấy từ tham số `sales.tax_rounding` và được chụp lại trên từng hóa đơn.
+- **EN:** A confirmed order automatically creates a `stock_documents` issue (`reason = 'SALE'`, `status = 'WAITING'`, `source_type = 'sales_order'`) — `FR-SAL-019`; confirming the issue updates `sales_order_lines.qty_delivered`. An invoice may combine several issues of the same customer, so the link is per line (`issue_line_id`). In P5, the e-invoice series / number issued on the provider's portal is typed into `einvoice_series` / `einvoice_no`; P9 switches to direct issuance. Tax rounding (`BR-SAL-006`) comes from the `sales.tax_rounding` parameter and is snapshotted on each invoice.
+
+```mermaid
+erDiagram
+    partners ||--o{ quotations : "quoted"
+    quotations ||--o{ quotation_lines : "contains"
+    quotations |o--o{ sales_orders : "converted to"
+    sales_orders ||--o{ sales_order_lines : "contains"
+    quotation_lines |o--o{ sales_order_lines : "source"
+    sales_order_lines ||--o{ stock_document_lines : "delivered as"
+    sales_orders |o--o{ customer_invoices : "invoiced by"
+    customer_invoices ||--o{ customer_invoice_lines : "contains"
+    customer_invoices ||--o{ customer_invoice_taxes : "tax per rate"
+    stock_document_lines |o--o{ customer_invoice_lines : "invoiced"
+    customer_invoices |o--o{ sales_returns : "returned from"
+    sales_returns ||--o{ sales_return_lines : "contains"
+```
+
+| Bảng / Table | Mục đích (VI) | Purpose (EN) |
+|---|---|---|
+| `quotations`, `quotation_lines` | Báo giá; `sent_at` ghi thời điểm gửi (`FR-SAL-003`). | Quotations; `sent_at` records when sent (`FR-SAL-003`). |
+| `sales_orders`, `sales_order_lines` | Đơn bán; dòng ghi nguồn giá (`price_source`), số đã giao / đã xuất hóa đơn / đã trả / đã đóng (`FR-SAL-014`, `FR-SAL-017`). | Sales orders; lines record the price source (`price_source`) and delivered / invoiced / returned / closed quantities (`FR-SAL-014`, `FR-SAL-017`). |
+| `customer_invoices`, `customer_invoice_lines`, `customer_invoice_taxes` | Hóa đơn bán, số HĐĐT, tiền thuế theo thuế suất (`FR-SAL-021`). | Customer invoices, e-invoice number, tax per rate (`FR-SAL-021`). |
+| `sales_returns`, `sales_return_lines` | Trả hàng từ hóa đơn hoặc phiếu xuất gốc, kho nhận lại, lý do bắt buộc, hóa đơn điều chỉnh (`FR-SAL-024`). | Returns from the original invoice or issue, receiving warehouse, mandatory reason, adjustment invoice (`FR-SAL-024`). |
+| `stock_documents.delivered_at`, `received_by_name` | Xác nhận đã giao và người nhận trên phiếu xuất (`FR-SAL-020`). | Delivery confirmation and recipient on the issue (`FR-SAL-020`). |
+
+| Quy tắc / Rule | Cơ chế (VI) | Mechanism (EN) |
+|---|---|---|
+| BR-SAL-001 | Service chặn hủy đơn khi có phiếu xuất `DONE`; chỉ đóng phần chưa giao bằng `qty_cancelled`. | The service blocks cancelling orders with `DONE` issues; only the undelivered part is closed via `qty_cancelled`. |
+| BR-SAL-002 | Service kiểm tra `qty_invoiced` ≤ `qty_delivered` (chính sách theo giao hàng) hoặc ≤ `qty` (theo đơn). | The service checks `qty_invoiced` ≤ `qty_delivered` (delivery policy) or ≤ `qty` (order policy). |
+| BR-SAL-004 | View `rpt_delivered_not_invoiced` ([10 · Báo cáo](10-reporting.md)) có `days_since_delivery` để cảnh báo theo `sales.uninvoiced_alert_days`. | The `rpt_delivered_not_invoiced` view ([10 · Reporting](10-reporting.md)) exposes `days_since_delivery` for alerts per `sales.uninvoiced_alert_days`. |
+| BR-SAL-005 | `exchange_rate` của hóa đơn là tỷ giá ghi nhận doanh thu; `amount_total_vnd` tính theo tỷ giá này. | The invoice `exchange_rate` is the revenue recognition rate; `amount_total_vnd` uses it. |
+
+<details>
+<summary>Xem DDL / Show DDL</summary>
+
+```sql
+-- Chạy sau / Run after: 01-roles-permissions.md (P5)
+
+INSERT INTO document_types (code, module, name_vi, name_en, function_code, table_name, sort_order) VALUES
+  ('QT',  'SAL', 'Báo giá',      'Quotation',        'SAL.QUOTATION',        'quotations',        510),
+  ('SO',  'SAL', 'Đơn bán hàng', 'Sales order',      'SAL.SALES_ORDER',      'sales_orders',      520),
+  ('CI',  'ACC', 'Hóa đơn bán',  'Customer invoice', 'ACC.CUSTOMER_INVOICE', 'customer_invoices', 530),
+  ('SRT', 'SAL', 'Trả hàng bán', 'Sales return',     'SAL.SALES_RETURN',     'sales_returns',     540);
+
+INSERT INTO document_sequences (document_type, prefix) VALUES ('QT', 'QT'), ('SO', 'SO'), ('CI', 'CI'), ('SRT', 'SRT');
+
+INSERT INTO system_settings (key, value) VALUES
+  ('sales.tax_rounding',          '"PER_LINE"'),  -- BR-SAL-006, phải khớp NCC HĐĐT / must match the e-invoice provider
+  ('sales.uninvoiced_alert_days', '3')            -- BR-SAL-004
+ON CONFLICT (key) DO NOTHING;
+
+-- FR-SAL-020
+ALTER TABLE stock_documents
+  ADD COLUMN delivered_at      timestamptz,
+  ADD COLUMN received_by_name  varchar(150);
+
+CREATE TYPE discount_type AS ENUM ('PERCENT','AMOUNT');
+CREATE TYPE tax_rounding  AS ENUM ('PER_LINE','PER_TOTAL');
+
+-- ===== Báo giá / Quotations =====
+CREATE TYPE quotation_status AS ENUM ('DRAFT','SENT','ACCEPTED','REJECTED','CANCELLED');
+
+CREATE TABLE quotations (
+  id                  uuid             PRIMARY KEY DEFAULT gen_random_uuid(),
+  doc_no              varchar(30)      UNIQUE,
+  branch_id           uuid             NOT NULL REFERENCES branches(id),
+  customer_id         uuid             NOT NULL REFERENCES partners(id),
+  contact_id          uuid             REFERENCES partner_contacts(id),
+  quotation_date      date             NOT NULL,
+  valid_until         date,
+  salesperson_id      uuid             REFERENCES employees(id),
+  currency_code       char(3)          NOT NULL REFERENCES currencies(code),
+  exchange_rate       dm_rate          NOT NULL DEFAULT 1,
+  payment_term_id     uuid             REFERENCES payment_terms(id),
+  delivery_terms      text,
+  prices_include_tax  boolean          NOT NULL DEFAULT false,
+  status              quotation_status NOT NULL DEFAULT 'DRAFT',
+  sent_at             timestamptz,
+  notes               text,
+  terms_conditions    text,
+  amount_untaxed      dm_amount        NOT NULL DEFAULT 0,
+  amount_tax          dm_amount        NOT NULL DEFAULT 0,
+  amount_total        dm_amount        NOT NULL DEFAULT 0,
+  version             integer          NOT NULL DEFAULT 1,
+  created_at          timestamptz      NOT NULL DEFAULT now(),
+  created_by          uuid             REFERENCES users(id),
+  updated_at          timestamptz      NOT NULL DEFAULT now(),
+  updated_by          uuid             REFERENCES users(id),
+  CHECK (valid_until IS NULL OR valid_until >= quotation_date)
+);
+CREATE INDEX ON quotations (customer_id, quotation_date);
+
+CREATE TABLE quotation_lines (
+  id              uuid          PRIMARY KEY DEFAULT gen_random_uuid(),
+  quotation_id    uuid          NOT NULL REFERENCES quotations(id),
+  line_no         smallint      NOT NULL,
+  product_id      uuid          NOT NULL REFERENCES products(id),
+  description     varchar(500),
+  uom_id          uuid          NOT NULL REFERENCES uoms(id),
+  uom_factor      dm_rate       NOT NULL DEFAULT 1,
+  qty             dm_qty        NOT NULL CHECK (qty > 0),
+  unit_price      dm_price      NOT NULL CHECK (unit_price >= 0),
+  discount_type   discount_type,
+  discount_value  dm_amount     NOT NULL DEFAULT 0 CHECK (discount_value >= 0),
+  tax_id          uuid          REFERENCES taxes(id),
+  amount_untaxed  dm_amount     NOT NULL,
+  amount_tax      dm_amount     NOT NULL DEFAULT 0,
+  amount_total    dm_amount     NOT NULL,
+  UNIQUE (quotation_id, line_no),
+  CHECK (discount_type <> 'PERCENT' OR discount_value <= 100)
+);
+
+-- ===== Đơn bán hàng / Sales orders =====
+CREATE TYPE so_status AS ENUM ('DRAFT','CONFIRMED','PARTIALLY_DELIVERED','DELIVERED','DONE','ON_HOLD','CANCELLED');
+CREATE TYPE price_source AS ENUM ('CUSTOMER_LIST','GROUP_LIST','DEFAULT_LIST','MANUAL');
+
+CREATE TABLE sales_orders (
+  id                      uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  doc_no                  varchar(30) UNIQUE,
+  branch_id               uuid        NOT NULL REFERENCES branches(id),
+  quotation_id            uuid        REFERENCES quotations(id),       -- FR-SAL-004
+  customer_id             uuid        NOT NULL REFERENCES partners(id),
+  contact_id              uuid        REFERENCES partner_contacts(id),
+  shipping_address_id     uuid        REFERENCES partner_addresses(id),
+  shipping_address        text,                                         -- chụp lại / snapshot
+  order_date              date        NOT NULL,
+  expected_delivery_date  date,
+  warehouse_id            uuid        REFERENCES warehouses(id),        -- kho xuất / source warehouse
+  salesperson_id          uuid        REFERENCES employees(id),
+  payment_term_id         uuid        REFERENCES payment_terms(id),
+  currency_code           char(3)     NOT NULL REFERENCES currencies(code),
+  exchange_rate           dm_rate     NOT NULL DEFAULT 1,
+  price_list_id           uuid        REFERENCES price_lists(id),
+  prices_include_tax      boolean     NOT NULL DEFAULT false,
+  shipping_fee            dm_amount   NOT NULL DEFAULT 0,
+  shipping_fee_tax_id     uuid        REFERENCES taxes(id),
+  internal_note           text,
+  customer_note           text,
+  status                  so_status   NOT NULL DEFAULT 'DRAFT',
+  confirmed_at            timestamptz,
+  confirmed_by            uuid        REFERENCES users(id),
+  cancel_reason           text,
+  amount_untaxed          dm_amount   NOT NULL DEFAULT 0,
+  amount_tax              dm_amount   NOT NULL DEFAULT 0,
+  amount_total            dm_amount   NOT NULL DEFAULT 0,
+  amount_total_vnd        dm_amount   NOT NULL DEFAULT 0,
+  version                 integer     NOT NULL DEFAULT 1,
+  created_at              timestamptz NOT NULL DEFAULT now(),
+  created_by              uuid        REFERENCES users(id),
+  updated_at              timestamptz NOT NULL DEFAULT now(),
+  updated_by              uuid        REFERENCES users(id),
+  CHECK (status <> 'CANCELLED' OR cancel_reason IS NOT NULL),  -- FR-SAL-016
+  CHECK (status IN ('DRAFT','CANCELLED') OR doc_no IS NOT NULL)
+);
+CREATE INDEX ON sales_orders (customer_id, order_date);
+CREATE INDEX ON sales_orders (salesperson_id, order_date);
+
+CREATE TABLE sales_order_lines (
+  id                 uuid          PRIMARY KEY DEFAULT gen_random_uuid(),
+  so_id              uuid          NOT NULL REFERENCES sales_orders(id),
+  line_no            smallint      NOT NULL,
+  quotation_line_id  uuid          REFERENCES quotation_lines(id),
+  product_id         uuid          NOT NULL REFERENCES products(id),
+  description        varchar(500),
+  uom_id             uuid          NOT NULL REFERENCES uoms(id),
+  uom_factor         dm_rate       NOT NULL DEFAULT 1,
+  qty                dm_qty        NOT NULL CHECK (qty > 0),
+  unit_price         dm_price      NOT NULL CHECK (unit_price >= 0),
+  price_source       price_source  NOT NULL DEFAULT 'MANUAL',  -- FR-SAL-007
+  discount_type      discount_type,
+  discount_value     dm_amount     NOT NULL DEFAULT 0 CHECK (discount_value >= 0),
+  discount_amount    dm_amount     NOT NULL DEFAULT 0,
+  tax_id             uuid          REFERENCES taxes(id),
+  amount_untaxed     dm_amount     NOT NULL,
+  amount_tax         dm_amount     NOT NULL DEFAULT 0,
+  amount_total       dm_amount     NOT NULL,
+  qty_delivered      dm_qty        NOT NULL DEFAULT 0,
+  qty_invoiced       dm_qty        NOT NULL DEFAULT 0,
+  qty_returned       dm_qty        NOT NULL DEFAULT 0,
+  qty_cancelled      dm_qty        NOT NULL DEFAULT 0,          -- phần đóng không giao / closed balance (FR-SAL-014)
+  UNIQUE (so_id, line_no),
+  CHECK (discount_type <> 'PERCENT' OR discount_value <= 100),
+  CHECK (qty_delivered + qty_cancelled <= qty)
+);
+CREATE INDEX ON sales_order_lines (product_id);
+
+-- ===== Hóa đơn bán / Customer invoices =====
+CREATE TYPE customer_invoice_status AS ENUM ('DRAFT','POSTED','PARTIALLY_PAID','PAID','CANCELLED');
+
+CREATE TABLE customer_invoices (
+  id                  uuid                    PRIMARY KEY DEFAULT gen_random_uuid(),
+  doc_no              varchar(30)             UNIQUE,
+  branch_id           uuid                    NOT NULL REFERENCES branches(id),
+  customer_id         uuid                    NOT NULL REFERENCES partners(id),
+  sales_order_id      uuid                    REFERENCES sales_orders(id),  -- NULL khi gộp nhiều đơn / NULL when combining orders
+  salesperson_id      uuid                    REFERENCES employees(id),
+  invoice_date        date                    NOT NULL,
+  accounting_date     date                    NOT NULL,
+  buyer_name          varchar(255)            NOT NULL,                     -- chụp lại / snapshot
+  buyer_tax_code      dm_tax_code,
+  buyer_address       text,
+  currency_code       char(3)                 NOT NULL REFERENCES currencies(code),
+  exchange_rate       dm_rate                 NOT NULL DEFAULT 1,           -- BR-SAL-005
+  prices_include_tax  boolean                 NOT NULL DEFAULT false,
+  tax_rounding        tax_rounding            NOT NULL,                     -- BR-SAL-006
+  payment_term_id     uuid                    REFERENCES payment_terms(id),
+  due_date            date,
+  einvoice_series     varchar(10),                                          -- FR-SAL-021 (nhập tay ở P5 / manual in P5)
+  einvoice_no         varchar(20),
+  einvoice_date       date,
+  amount_untaxed      dm_amount               NOT NULL DEFAULT 0,
+  amount_tax          dm_amount               NOT NULL DEFAULT 0,
+  amount_total        dm_amount               NOT NULL DEFAULT 0,
+  amount_total_vnd    dm_amount               NOT NULL DEFAULT 0,
+  status              customer_invoice_status NOT NULL DEFAULT 'DRAFT',
+  posted_at           timestamptz,
+  posted_by           uuid                    REFERENCES users(id),
+  cancel_reason       text,
+  version             integer                 NOT NULL DEFAULT 1,
+  created_at          timestamptz             NOT NULL DEFAULT now(),
+  created_by          uuid                    REFERENCES users(id),
+  updated_at          timestamptz             NOT NULL DEFAULT now(),
+  updated_by          uuid                    REFERENCES users(id)
+);
+CREATE INDEX ON customer_invoices (customer_id, invoice_date);
+CREATE UNIQUE INDEX customer_invoices_einvoice_unique
+  ON customer_invoices (upper(einvoice_series), einvoice_no)
+  WHERE einvoice_no IS NOT NULL AND status <> 'CANCELLED';
+
+CREATE TABLE customer_invoice_lines (
+  id               uuid      PRIMARY KEY DEFAULT gen_random_uuid(),
+  invoice_id       uuid      NOT NULL REFERENCES customer_invoices(id),
+  line_no          smallint  NOT NULL,
+  so_line_id       uuid      REFERENCES sales_order_lines(id),
+  issue_line_id    uuid      REFERENCES stock_document_lines(id),  -- NULL với dịch vụ / NULL for services (FR-SAL-018)
+  product_id       uuid      NOT NULL REFERENCES products(id),
+  description      varchar(500),
+  uom_id           uuid      NOT NULL REFERENCES uoms(id),
+  uom_factor       dm_rate   NOT NULL DEFAULT 1,
+  qty              dm_qty    NOT NULL CHECK (qty > 0),
+  unit_price       dm_price  NOT NULL,
+  discount_amount  dm_amount NOT NULL DEFAULT 0,
+  tax_id           uuid      REFERENCES taxes(id),
+  amount_untaxed   dm_amount NOT NULL,
+  amount_tax       dm_amount NOT NULL DEFAULT 0,
+  amount_total     dm_amount NOT NULL,
+  UNIQUE (invoice_id, line_no)
+);
+CREATE INDEX ON customer_invoice_lines (so_line_id);
+CREATE INDEX ON customer_invoice_lines (issue_line_id);
+
+CREATE TABLE customer_invoice_taxes (
+  invoice_id      uuid      NOT NULL REFERENCES customer_invoices(id),
+  tax_id          uuid      NOT NULL REFERENCES taxes(id),
+  taxable_amount  dm_amount NOT NULL,
+  tax_amount      dm_amount NOT NULL,
+  PRIMARY KEY (invoice_id, tax_id)
+);
+
+-- ===== Trả hàng bán / Sales returns =====
+CREATE TYPE sales_return_status AS ENUM ('DRAFT','RECEIVED','CREDITED');
+
+CREATE TABLE sales_returns (
+  id                      uuid                PRIMARY KEY DEFAULT gen_random_uuid(),
+  doc_no                  varchar(30)         UNIQUE,
+  branch_id               uuid                NOT NULL REFERENCES branches(id),
+  customer_id             uuid                NOT NULL REFERENCES partners(id),
+  return_date             date                NOT NULL,
+  invoice_id              uuid                REFERENCES customer_invoices(id),
+  issue_id                uuid                REFERENCES stock_documents(id),
+  sales_order_id          uuid                REFERENCES sales_orders(id),
+  warehouse_id            uuid                NOT NULL REFERENCES warehouses(id),  -- có thể là kho hàng lỗi / may be defective
+  receipt_id              uuid                REFERENCES stock_documents(id),      -- phiếu nhập hàng trả / return receipt
+  reason                  text                NOT NULL,
+  currency_code           char(3)             NOT NULL REFERENCES currencies(code),
+  exchange_rate           dm_rate             NOT NULL DEFAULT 1,
+  amount_untaxed          dm_amount           NOT NULL DEFAULT 0,
+  amount_tax              dm_amount           NOT NULL DEFAULT 0,
+  amount_total            dm_amount           NOT NULL DEFAULT 0,
+  amount_total_vnd        dm_amount           NOT NULL DEFAULT 0,
+  credit_einvoice_series  varchar(10),        -- hóa đơn điều chỉnh giảm / decrease adjustment invoice
+  credit_einvoice_no      varchar(20),
+  credit_einvoice_date    date,
+  status                  sales_return_status NOT NULL DEFAULT 'DRAFT',
+  version                 integer             NOT NULL DEFAULT 1,
+  created_at              timestamptz         NOT NULL DEFAULT now(),
+  created_by              uuid                REFERENCES users(id),
+  updated_at              timestamptz         NOT NULL DEFAULT now(),
+  updated_by              uuid                REFERENCES users(id),
+  CHECK (invoice_id IS NOT NULL OR issue_id IS NOT NULL)
+);
+
+CREATE TABLE sales_return_lines (
+  id               uuid      PRIMARY KEY DEFAULT gen_random_uuid(),
+  return_id        uuid      NOT NULL REFERENCES sales_returns(id),
+  line_no          smallint  NOT NULL,
+  so_line_id       uuid      REFERENCES sales_order_lines(id),
+  invoice_line_id  uuid      REFERENCES customer_invoice_lines(id),
+  issue_line_id    uuid      REFERENCES stock_document_lines(id),
+  product_id       uuid      NOT NULL REFERENCES products(id),
+  uom_id           uuid      NOT NULL REFERENCES uoms(id),
+  uom_factor       dm_rate   NOT NULL DEFAULT 1,
+  qty              dm_qty    NOT NULL CHECK (qty > 0),  -- ≤ số đã giao, kiểm ở service / ≤ delivered, checked by the service
+  unit_price       dm_price  NOT NULL,
+  tax_id           uuid      REFERENCES taxes(id),
+  amount_untaxed   dm_amount NOT NULL,
+  amount_tax       dm_amount NOT NULL DEFAULT 0,
+  UNIQUE (return_id, line_no)
+);
+```
+
+</details>
+
+## 8. Câu hỏi mở / Open questions
 
 | # | Câu hỏi (VI) | Question (EN) |
 |---|---|---|

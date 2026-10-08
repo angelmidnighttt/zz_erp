@@ -97,3 +97,302 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../
 |---|---|---|---|
 | BR-SYS-004 | Chứng từ đang chờ duyệt không được sửa; người tạo phải rút lại (recall) trước khi sửa. | Documents pending approval cannot be edited; the creator must recall them first. | P7 |
 | BR-SYS-005 | Sửa chứng từ đã duyệt làm thay đổi giá trị trọng yếu (số tiền, số lượng, đối tác) sẽ đưa chứng từ về trạng thái chờ duyệt lại. | Editing an approved document's key values (amount, quantity, partner) sends it back for re-approval. | P7 |
+
+## 3. Mô hình dữ liệu / Data model
+
+- **VI:** Phạm vi dữ liệu, quyền theo trường, hạn mức, phân tách nhiệm vụ, sao chép vai trò và nhật ký kiểm toán (`audit_logs`) nằm ở [01 · Vai trò & phân quyền](01-roles-permissions.md). Tệp này bổ sung: bảo mật tài khoản, phiên đăng nhập, luồng duyệt và thông báo. Bật / tắt duyệt theo loại chứng từ bằng `document_types.approval_mode` (`NONE` / `SINGLE` / `FLOW`); với `FLOW`, luồng có `priority` nhỏ nhất thỏa mọi điều kiện khác `NULL` được chọn, không luồng nào thỏa thì chứng từ được xác nhận ngay. Người duyệt "quản lý trực tiếp" là trưởng phòng ban của người gửi (`departments.head_employee_id`) cho tới khi có quản lý trực tiếp trong hồ sơ nhân sự (P10).
+- **EN:** Data scope, field-level permissions, limits, segregation of duties, role cloning and the audit log (`audit_logs`) live in [01 · Roles & permissions](01-roles-permissions.md). This file adds account security, sessions, approval flows and notifications. Approval is switched on / off per document type with `document_types.approval_mode` (`NONE` / `SINGLE` / `FLOW`); with `FLOW`, the active flow with the lowest `priority` whose non-`NULL` conditions all match is chosen, and if none matches the document is confirmed immediately. The "direct manager" approver is the head of the submitter's department (`departments.head_employee_id`) until direct managers exist in HR records (P10).
+
+```mermaid
+erDiagram
+    users ||--o{ login_attempts : "tries"
+    users ||--o{ password_history : "used"
+    users ||--o{ password_reset_tokens : "resets"
+    users ||--o| user_mfa_totp : "MFA"
+    users ||--o{ user_sessions : "signs in"
+    user_sessions ||--o{ refresh_tokens : "rotates"
+    document_types ||--o{ approval_flows : "approved by"
+    approval_flows ||--o{ approval_flow_steps : "has"
+    approval_flow_steps ||--o{ approval_step_approvers : "approved by"
+    approval_flows |o--o{ approval_requests : "routes"
+    approval_requests ||--o{ approval_actions : "history"
+    notification_types ||--o{ notifications : "typed"
+    users ||--o{ notifications : "receives"
+    users ||--o{ user_notification_preferences : "chooses"
+```
+
+| Bảng / Table | Mục đích (VI) | Purpose (EN) |
+|---|---|---|
+| `users` (cột mới / new columns) | Ngôn ngữ giao diện (`FR-SYS-031`), khóa tạm thời `locked_until` (`FR-SYS-006`), bật MFA. | UI language (`FR-SYS-031`), temporary lock `locked_until` (`FR-SYS-006`), MFA flag. |
+| `login_attempts` | Mọi lần đăng nhập thành công / thất bại; đếm lần sai trong 15 phút để khóa tạm thời. | Every successful / failed login; failures within 15 minutes drive the temporary lock. |
+| `password_history` | 5 mật khẩu gần nhất không được dùng lại (`FR-SYS-006`). | The last 5 passwords cannot be reused (`FR-SYS-006`). |
+| `password_reset_tokens` | Liên kết đặt lại mật khẩu dùng một lần, hết hạn sau 30 phút (`FR-SYS-007`). | Single-use reset links expiring after 30 minutes (`FR-SYS-007`). |
+| `user_mfa_totp` | Bí mật TOTP (mã hóa) và bước thời gian đã dùng để chống dùng lại mã (`FR-SYS-008`). | Encrypted TOTP secret and last used time step for replay protection (`FR-SYS-008`). |
+| `user_sessions` | Phiên đăng nhập theo thiết bị; thu hồi một phiên hoặc tất cả (`FR-SYS-005`, `FR-SYS-010`). | Per-device sessions; revoke one or all (`FR-SYS-005`, `FR-SYS-010`). |
+| `approval_flows`, `approval_flow_steps`, `approval_step_approvers` | Cấu hình luồng duyệt có điều kiện, nhiều bước tuần tự (`FR-SYS-015`). | Conditional, multi-step sequential approval flows (`FR-SYS-015`). |
+| `approval_requests`, `approval_actions` | Lượt duyệt của một chứng từ và lịch sử duyệt / từ chối / trả lại / rút lại (`FR-SYS-016`, `BR-SYS-004`); `snapshot` giữ giá trị trọng yếu để phát hiện thay đổi cần duyệt lại (`BR-SYS-005`). | Approval rounds per document and the approve / reject / return / recall history (`FR-SYS-016`, `BR-SYS-004`); `snapshot` keeps key values to detect changes needing re-approval (`BR-SYS-005`). |
+| `approval_inbox(user)`, `direct_manager_user_ids(user)` | Màn hình "Chờ tôi duyệt", loại chứng từ do chính người dùng gửi (`BR-ROL-001`); hàm xác định quản lý trực tiếp. | The "Waiting for my approval" inbox, excluding documents the user submitted (`BR-ROL-001`); the direct-manager resolver. |
+| `notification_types`, `notifications`, `user_notification_preferences` | Thông báo trong ứng dụng / email và lựa chọn kênh theo loại (`FR-SYS-025`). | In-app / email notifications and per-type channel choice (`FR-SYS-025`). |
+
+<details>
+<summary>Xem DDL / Show DDL</summary>
+
+```sql
+-- Chạy sau / Run after: 01-roles-permissions.md (P7)
+
+INSERT INTO system_settings (key, value) VALUES
+  ('security.password_history_count',    '5'),
+  ('security.lockout_threshold',         '5'),
+  ('security.lockout_window_minutes',    '15'),
+  ('security.lockout_duration_minutes',  '15'),
+  ('security.password_reset_ttl_minutes','30'),
+  ('security.session_idle_minutes',      '30'),
+  ('security.mfa_required_roles',        '["ADM","CAC","CEO"]')
+ON CONFLICT (key) DO NOTHING;
+
+-- ===== Tài khoản & phiên / Accounts & sessions =====
+CREATE TYPE ui_language AS ENUM ('vi','en');
+
+ALTER TABLE users
+  ADD COLUMN preferred_language  ui_language,          -- NULL = general.default_language
+  ADD COLUMN locked_until        timestamptz,          -- khóa tạm thời / temporary lock (FR-SYS-006)
+  ADD COLUMN mfa_enabled         boolean NOT NULL DEFAULT false;
+
+CREATE TABLE login_attempts (
+  id              bigint       GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  attempted_at    timestamptz  NOT NULL DEFAULT now(),
+  login_name      varchar(255) NOT NULL,   -- email / tên đăng nhập đã nhập / as typed
+  user_id         uuid         REFERENCES users(id),
+  success         boolean      NOT NULL,
+  failure_reason  varchar(30),             -- 'BAD_PASSWORD','LOCKED','MFA_FAILED','UNKNOWN_USER'
+  ip_address      inet,
+  user_agent      text
+);
+CREATE INDEX ON login_attempts (user_id, attempted_at DESC);
+CREATE INDEX ON login_attempts (ip_address, attempted_at DESC);
+
+CREATE TABLE password_history (
+  id             bigint      GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id        uuid        NOT NULL REFERENCES users(id),
+  password_hash  text        NOT NULL,
+  changed_at     timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX ON password_history (user_id, changed_at DESC);
+
+CREATE TABLE password_reset_tokens (
+  id            uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id       uuid        NOT NULL REFERENCES users(id),
+  token_hash    text        NOT NULL UNIQUE,
+  expires_at    timestamptz NOT NULL,
+  used_at       timestamptz,
+  requested_ip  inet,
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  CHECK (expires_at > created_at)
+);
+
+CREATE TABLE user_mfa_totp (
+  user_id            uuid         PRIMARY KEY REFERENCES users(id),
+  secret_ciphertext  bytea        NOT NULL,
+  secret_key_id      varchar(100) NOT NULL,
+  confirmed_at       timestamptz,            -- NULL = chưa quét mã xong / enrolment not finished
+  last_used_step     bigint,                 -- chống dùng lại mã / replay protection
+  created_at         timestamptz  NOT NULL DEFAULT now(),
+  updated_at         timestamptz  NOT NULL DEFAULT now()
+);
+
+CREATE TABLE user_sessions (
+  id               uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id          uuid         NOT NULL REFERENCES users(id),
+  created_at       timestamptz  NOT NULL DEFAULT now(),
+  last_seen_at     timestamptz  NOT NULL DEFAULT now(),  -- tự đăng xuất khi quá session_idle_minutes
+  ip_address       inet,
+  user_agent       text,
+  mfa_verified_at  timestamptz,
+  revoked_at       timestamptz,
+  revoked_by       uuid         REFERENCES users(id),
+  revoke_reason    varchar(20)  -- 'LOGOUT','LOGOUT_ALL','IDLE','ADMIN','LOCKED'
+);
+CREATE INDEX ON user_sessions (user_id) WHERE revoked_at IS NULL;
+
+ALTER TABLE refresh_tokens ADD COLUMN session_id uuid REFERENCES user_sessions(id);
+
+-- BR-SYS-003: khóa người dùng thu hồi cả phiên / locking a user also revokes sessions
+CREATE OR REPLACE FUNCTION trg_users_revoke_tokens_on_lock() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  UPDATE refresh_tokens SET revoked_at = now()
+   WHERE user_id = NEW.id AND revoked_at IS NULL;
+  UPDATE user_sessions SET revoked_at = now(), revoke_reason = 'LOCKED'
+   WHERE user_id = NEW.id AND revoked_at IS NULL;
+  RETURN NEW;
+END $$;
+
+-- ===== Luồng duyệt / Approval workflow =====
+CREATE TYPE approval_mode AS ENUM ('NONE','SINGLE','FLOW');
+ALTER TABLE document_types ADD COLUMN approval_mode approval_mode NOT NULL DEFAULT 'NONE';
+
+CREATE TABLE approval_flows (
+  id                   uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+  code                 varchar(30)  NOT NULL UNIQUE,
+  name                 varchar(150) NOT NULL,
+  name_en              varchar(150),
+  document_type        varchar(10)  NOT NULL REFERENCES document_types(code),
+  priority             integer      NOT NULL DEFAULT 100,
+  -- Điều kiện, NULL = không xét / conditions, NULL = ignored
+  amount_from          dm_amount,   -- VND
+  amount_to            dm_amount,
+  branch_id            uuid         REFERENCES branches(id),
+  department_id        uuid         REFERENCES departments(id),
+  discount_pct_from    dm_pct,
+  expense_category_id  uuid         REFERENCES expense_categories(id),
+  product_category_id  uuid         REFERENCES product_categories(id),  -- FR-PUR-009
+  trigger_reason       varchar(30), -- 'CREDIT_LIMIT','BELOW_MIN_PRICE','DISCOUNT_LIMIT','OVER_TOLERANCE'…
+  is_active            boolean      NOT NULL DEFAULT true,
+  version              integer      NOT NULL DEFAULT 1,
+  created_at           timestamptz  NOT NULL DEFAULT now(),
+  created_by           uuid         REFERENCES users(id),
+  updated_at           timestamptz  NOT NULL DEFAULT now(),
+  updated_by           uuid         REFERENCES users(id),
+  CHECK (amount_to IS NULL OR amount_from IS NULL OR amount_to >= amount_from)
+);
+CREATE INDEX ON approval_flows (document_type, priority) WHERE is_active;
+
+CREATE TABLE approval_flow_steps (
+  id       uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+  flow_id  uuid         NOT NULL REFERENCES approval_flows(id) ON DELETE CASCADE,
+  step_no  smallint     NOT NULL CHECK (step_no > 0),
+  name     varchar(150),
+  UNIQUE (flow_id, step_no)
+);
+
+CREATE TYPE approver_type AS ENUM ('USER','ROLE','DIRECT_MANAGER');
+
+CREATE TABLE approval_step_approvers (
+  id             uuid          PRIMARY KEY DEFAULT gen_random_uuid(),
+  step_id        uuid          NOT NULL REFERENCES approval_flow_steps(id) ON DELETE CASCADE,
+  approver_type  approver_type NOT NULL,
+  user_id        uuid          REFERENCES users(id),
+  role_id        uuid          REFERENCES roles(id),
+  CHECK (CASE approver_type
+           WHEN 'USER' THEN user_id IS NOT NULL AND role_id IS NULL
+           WHEN 'ROLE' THEN role_id IS NOT NULL AND user_id IS NULL
+           ELSE user_id IS NULL AND role_id IS NULL END)
+);
+
+CREATE TYPE approval_status AS ENUM ('PENDING','APPROVED','REJECTED','RETURNED','RECALLED');
+
+CREATE TABLE approval_requests (
+  id               uuid            PRIMARY KEY DEFAULT gen_random_uuid(),
+  document_type    varchar(10)     NOT NULL REFERENCES document_types(code),
+  document_id      uuid            NOT NULL,
+  flow_id          uuid            REFERENCES approval_flows(id),   -- NULL = duyệt một cấp / single-level
+  current_step_no  smallint        NOT NULL DEFAULT 1,
+  status           approval_status NOT NULL DEFAULT 'PENDING',
+  reasons          text[]          NOT NULL DEFAULT '{}',           -- vd / e.g. {CREDIT_LIMIT}
+  amount_vnd       dm_amount,
+  snapshot         jsonb,                                           -- BR-SYS-005
+  submitted_by     uuid            NOT NULL REFERENCES users(id),
+  submitted_at     timestamptz     NOT NULL DEFAULT now(),
+  completed_at     timestamptz
+);
+-- BR-SYS-004: mỗi chứng từ chỉ một lượt đang chờ / one pending round per document
+CREATE UNIQUE INDEX approval_requests_one_pending
+  ON approval_requests (document_type, document_id) WHERE status = 'PENDING';
+CREATE INDEX ON approval_requests (document_type, document_id);
+
+CREATE TYPE approval_action_type AS ENUM ('SUBMIT','APPROVE','REJECT','RETURN','RECALL');
+
+CREATE TABLE approval_actions (
+  id             bigint               GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  request_id     uuid                 NOT NULL REFERENCES approval_requests(id),
+  step_no        smallint             NOT NULL,
+  action         approval_action_type NOT NULL,
+  actor_user_id  uuid                 NOT NULL REFERENCES users(id),
+  comment        text,
+  acted_at       timestamptz          NOT NULL DEFAULT now(),
+  CHECK (action NOT IN ('REJECT','RETURN') OR comment IS NOT NULL)  -- lý do bắt buộc / reason required
+);
+CREATE INDEX ON approval_actions (request_id, acted_at);
+
+-- "Quản lý trực tiếp": trưởng phòng ban của người dùng; P10 thay bằng quản lý trong hồ sơ nhân sự
+-- "Direct manager": head of the user's department; P10 replaces it with the manager from HR records
+CREATE FUNCTION direct_manager_user_ids(p_user_id uuid) RETURNS SETOF uuid
+LANGUAGE sql STABLE AS $$
+  SELECT mgr.id
+  FROM users u
+  JOIN employees e   ON e.id = u.employee_id
+  JOIN departments d ON d.id = e.department_id
+  JOIN users mgr     ON mgr.employee_id = d.head_employee_id
+  WHERE u.id = p_user_id
+$$;
+
+-- "Chờ tôi duyệt" / "Waiting for my approval". Hạn mức và phạm vi dữ liệu kiểm thêm ở service.
+-- Limits and data scope are additionally checked by the service.
+CREATE FUNCTION approval_inbox(p_user_id uuid) RETURNS SETOF approval_requests
+LANGUAGE sql STABLE AS $$
+  SELECT ar.*
+  FROM approval_requests ar
+  WHERE ar.status = 'PENDING'
+    AND ar.submitted_by <> p_user_id                                   -- BR-ROL-001
+    AND (
+      EXISTS (                                                         -- luồng nhiều cấp / multi-level
+        SELECT 1
+        FROM approval_flow_steps s
+        JOIN approval_step_approvers ap ON ap.step_id = s.id
+        WHERE s.flow_id = ar.flow_id AND s.step_no = ar.current_step_no
+          AND (   (ap.approver_type = 'USER' AND ap.user_id = p_user_id)
+               OR (ap.approver_type = 'ROLE' AND EXISTS (
+                     SELECT 1 FROM user_roles ur WHERE ur.user_id = p_user_id AND ur.role_id = ap.role_id))
+               OR (ap.approver_type = 'DIRECT_MANAGER'
+                   AND p_user_id IN (SELECT direct_manager_user_ids(ar.submitted_by))))
+      )
+      OR (ar.flow_id IS NULL AND EXISTS (                              -- một cấp / single-level
+        SELECT 1
+        FROM document_types dt
+        JOIN v_user_permissions up ON up.function_code = dt.function_code AND up.action = 'APPROVE'
+        WHERE dt.code = ar.document_type AND up.user_id = p_user_id))
+    )
+$$;
+
+-- ===== Thông báo / Notifications =====
+CREATE TABLE notification_types (
+  code           varchar(50)  PRIMARY KEY,
+  name_vi        varchar(150) NOT NULL,
+  name_en        varchar(150) NOT NULL,
+  default_in_app boolean      NOT NULL DEFAULT true,
+  default_email  boolean      NOT NULL DEFAULT true
+);
+
+INSERT INTO notification_types (code, name_vi, name_en) VALUES
+  ('APPROVAL_PENDING',      'Chứng từ chờ duyệt',                'Document pending approval'),
+  ('APPROVAL_DECIDED',      'Chứng từ được duyệt / bị từ chối',  'Document approved / rejected'),
+  ('DOCUMENT_ASSIGNED',     'Chứng từ được giao xử lý',          'Document assigned'),
+  ('EXPIRY_ALERT',          'Hợp đồng / lô hàng sắp hết hạn',    'Contract / lot nearing expiry'),
+  ('DUE_REMINDER',          'Công nợ đến hạn',                   'Receivable / payable due'),
+  ('SUPPLIER_BANK_CHANGED', 'Đổi tài khoản ngân hàng NCC',       'Supplier bank account changed');  -- BR-MDM-004
+
+CREATE TABLE notifications (
+  id                bigint       GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id           uuid         NOT NULL REFERENCES users(id),
+  type_code         varchar(50)  NOT NULL REFERENCES notification_types(code),
+  title             varchar(255) NOT NULL,  -- theo ngôn ngữ người nhận / in the recipient's language
+  body              text,
+  entity_type       varchar(50),
+  entity_id         uuid,
+  email_message_id  uuid,                   -- FK thêm ở / FK added in 11-integrations (P7)
+  read_at           timestamptz,
+  created_at        timestamptz  NOT NULL DEFAULT now()
+);
+CREATE INDEX ON notifications (user_id, created_at DESC);
+CREATE INDEX notifications_unread ON notifications (user_id) WHERE read_at IS NULL;
+
+CREATE TABLE user_notification_preferences (
+  user_id    uuid        NOT NULL REFERENCES users(id),
+  type_code  varchar(50) NOT NULL REFERENCES notification_types(code),
+  in_app     boolean     NOT NULL,
+  email      boolean     NOT NULL,
+  PRIMARY KEY (user_id, type_code)
+);
+```
+
+</details>

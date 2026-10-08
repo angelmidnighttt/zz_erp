@@ -24,3 +24,36 @@ Ký hiệu / Legend: `V` Xem / View · `C` Tạo / Create · `E` Sửa / Edit ·
 
 - **VI:** Ma trận là cấu hình mặc định khi khởi tạo; quản trị viên có thể thay đổi. Ô có `A` chỉ có tác dụng từ khi có luồng duyệt (P7).
 - **EN:** The matrix is the initial default configuration; administrators can change it. Cells with `A` only take effect once approval flows exist (P7).
+
+## 3. Mô hình dữ liệu / Data model
+
+- **VI:** Không đổi lược đồ; nạp chức năng và ma trận mục 1. Bổ sung chức năng `INV.RECEIPT_WITHOUT_PO` (chỉ hành động Tạo) cho quyền "nhận hàng không đơn" của `BR-PUR-002`; tài liệu chưa quy định vai trò mặc định nên seed không cấp cho ai, quản trị viên tự gán.
+- **EN:** No schema change; the section 1 functions and matrix are seeded. A `INV.RECEIPT_WITHOUT_PO` function (Create only) is added for the "receive without PO" right of `BR-PUR-002`; the docs define no default role for it, so the seed grants it to nobody and administrators assign it.
+
+<details>
+<summary>Xem DDL / Show DDL</summary>
+
+```sql
+-- Chạy sau / Run after: P3
+
+INSERT INTO app_functions (code, module, name_vi, name_en, supported_actions, sort_order) VALUES
+  ('PUR.PURCHASE_ORDER',     'PUR', 'Đơn mua hàng',           'Purchase orders',          '{VIEW,CREATE,EDIT,DELETE,APPROVE}', 410),
+  ('ACC.VENDOR_BILL',        'ACC', 'Hóa đơn mua',            'Vendor bills',             '{VIEW,CREATE,EDIT,DELETE,APPROVE}', 710),
+  ('INV.RECEIPT_WITHOUT_PO', 'INV', 'Nhận hàng không đơn mua', 'Receive without a PO',    '{CREATE}',                          315)
+ON CONFLICT (code) DO NOTHING;
+
+INSERT INTO role_permissions (role_id, function_code, action)
+SELECT r.id, m.function_code, a
+FROM (VALUES
+  ('PUR.PURCHASE_ORDER', 'CEO', 'VA'),  ('PUR.PURCHASE_ORDER', 'PUR', 'VCE'),  ('PUR.PURCHASE_ORDER', 'PUM', 'VCEDA'),
+  ('PUR.PURCHASE_ORDER', 'WH',  'V'),   ('PUR.PURCHASE_ORDER', 'WHM', 'V'),    ('PUR.PURCHASE_ORDER', 'ACC', 'V'),
+  ('PUR.PURCHASE_ORDER', 'CAC', 'V'),   ('PUR.PURCHASE_ORDER', 'AUD', 'V'),
+  ('ACC.VENDOR_BILL',    'CEO', 'V'),   ('ACC.VENDOR_BILL',    'PUR', 'V'),    ('ACC.VENDOR_BILL',    'PUM', 'V'),
+  ('ACC.VENDOR_BILL',    'ACC', 'VCE'), ('ACC.VENDOR_BILL',    'CAC', 'VCEDA'), ('ACC.VENDOR_BILL',   'AUD', 'V')
+) AS m(function_code, role_code, letters)
+JOIN roles r ON r.code = m.role_code
+CROSS JOIN LATERAL perm_letters(m.letters) AS a
+ON CONFLICT DO NOTHING;
+```
+
+</details>

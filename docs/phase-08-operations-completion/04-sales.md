@@ -51,3 +51,68 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P5](../
 | FR-SAL-018 | Xuất hóa đơn dịch vụ theo tiến độ hoàn thành. | Invoice services by completion milestones. |
 | FR-SAL-022 | Cấu hình chính sách theo sản phẩm hoặc khách hàng. | Configure the policy per product or customer. |
 | FR-SAL-030 | So sánh với kỳ trước. | Comparison with prior periods. |
+
+## 2. Mô hình dữ liệu / Data model
+
+- **VI:** Sửa báo giá đã gửi tạo một dòng `quotations` mới (số `…-R2`), cùng `root_id`; chỉ một phiên bản là `is_current` (`FR-SAL-002`). Giữ hàng dùng `stock_reservations` ([06 · Kho](06-inventory.md)). Tiền đặt cọc là phiếu thu / báo có gắn `sales_order_id`, tạo khoản Có trong `open_items` và được phân bổ vào hóa đơn khi xuất hóa đơn (`FR-SAL-015`). Chiết khấu tổng đơn được phân bổ xuống `allocated_order_discount` của từng dòng để tính thuế và doanh thu.
+- **EN:** Editing a sent quotation creates a new `quotations` row (number `…-R2`) with the same `root_id`; only one revision is `is_current` (`FR-SAL-002`). Reservations use `stock_reservations` ([06 · Inventory](06-inventory.md)). A deposit is a cash receipt / bank credit carrying `sales_order_id`; it creates a credit `open_items` row that is allocated to the invoice on invoicing (`FR-SAL-015`). The order-level discount is allocated to each line's `allocated_order_discount` so tax and revenue are correct.
+
+| Thay đổi / Change | Mục đích (VI) | Purpose (EN) |
+|---|---|---|
+| `quotations.root_id`, `revision_no`, `is_current`; `quotation_status` + `EXPIRED` | Phiên bản và hết hạn báo giá (`FR-SAL-002`, `FR-SAL-005`). | Quotation revisions and expiry (`FR-SAL-002`, `FR-SAL-005`). |
+| `cash_documents.sales_order_id` | Tiền đặt cọc theo đơn (`FR-SAL-015`). | Order deposits (`FR-SAL-015`). |
+| `sales_orders.order_discount_*`, `sales_order_lines.allocated_order_discount` | Chiết khấu tổng đơn và phần phân bổ (mở rộng `FR-SAL-008`). | Order-level discount and its allocation (`FR-SAL-008` extension). |
+| `products.invoice_policy`, `partners.invoice_policy` | Chính sách xuất hóa đơn theo sản phẩm / khách hàng; trống thì theo tham số chung (mở rộng `FR-SAL-022`). | Invoicing policy per product / customer; empty falls back to the global parameter (`FR-SAL-022` extension). |
+| `sales_order_milestones` | Xuất hóa đơn dịch vụ theo tiến độ (mở rộng `FR-SAL-018`). | Milestone invoicing of services (`FR-SAL-018` extension). |
+
+<details>
+<summary>Xem DDL / Show DDL</summary>
+
+```sql
+-- Chạy sau / Run after: 06-inventory.md (P8)
+
+INSERT INTO system_settings (key, value) VALUES ('sales.quotation_expiry_reminder_days', '3')  -- FR-SAL-005
+ON CONFLICT (key) DO NOTHING;
+
+-- FR-SAL-002, FR-SAL-005
+ALTER TYPE quotation_status ADD VALUE 'EXPIRED' BEFORE 'CANCELLED';
+
+ALTER TABLE quotations
+  ADD COLUMN root_id      uuid     REFERENCES quotations(id),  -- NULL = bản gốc / original
+  ADD COLUMN revision_no  smallint NOT NULL DEFAULT 1 CHECK (revision_no > 0),
+  ADD COLUMN is_current   boolean  NOT NULL DEFAULT true;
+CREATE UNIQUE INDEX quotations_one_current ON quotations (coalesce(root_id, id)) WHERE is_current;
+CREATE INDEX quotations_expiring ON quotations (valid_until) WHERE status = 'SENT';
+
+-- FR-SAL-015
+ALTER TABLE cash_documents ADD COLUMN sales_order_id uuid REFERENCES sales_orders(id);
+
+-- FR-SAL-008 (mở rộng / extension)
+ALTER TABLE sales_orders
+  ADD COLUMN order_discount_type    discount_type,
+  ADD COLUMN order_discount_value   dm_amount NOT NULL DEFAULT 0 CHECK (order_discount_value >= 0),
+  ADD COLUMN order_discount_amount  dm_amount NOT NULL DEFAULT 0;
+ALTER TABLE sales_order_lines
+  ADD COLUMN allocated_order_discount dm_amount NOT NULL DEFAULT 0;
+
+-- FR-SAL-022 (mở rộng / extension)
+CREATE TYPE invoice_policy AS ENUM ('ORDERED','DELIVERED');
+ALTER TABLE products ADD COLUMN invoice_policy invoice_policy;  -- NULL = sales.invoice_policy
+ALTER TABLE partners ADD COLUMN invoice_policy invoice_policy;  -- ưu tiên khách hàng > sản phẩm > chung
+
+-- FR-SAL-018 (mở rộng / extension)
+CREATE TABLE sales_order_milestones (
+  id               uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+  so_line_id       uuid         NOT NULL REFERENCES sales_order_lines(id),
+  seq              smallint     NOT NULL CHECK (seq > 0),
+  name             varchar(255) NOT NULL,
+  percent          dm_pct       NOT NULL CHECK (percent > 0),
+  planned_date     date,
+  completed_at     timestamptz,
+  completed_by     uuid         REFERENCES users(id),
+  invoice_line_id  uuid         REFERENCES customer_invoice_lines(id),
+  UNIQUE (so_line_id, seq)
+);
+```
+
+</details>

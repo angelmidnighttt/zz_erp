@@ -26,3 +26,44 @@ Ký hiệu / Legend: `V` Xem / View · `C` Tạo / Create · `E` Sửa / Edit ·
 
 - **VI:** Ma trận là cấu hình mặc định khi khởi tạo; quản trị viên có thể thay đổi. Ô có `A` chỉ có tác dụng từ khi có luồng duyệt (P7).
 - **EN:** The matrix is the initial default configuration; administrators can change it. Cells with `A` only take effect once approval flows exist (P7).
+
+## 3. Mô hình dữ liệu / Data model
+
+- **VI:** Không đổi lược đồ; nạp chức năng và ma trận mục 1. Bổ sung hai chức năng cho các quyền riêng mà [04 · Bán hàng](04-sales.md) yêu cầu nhưng chưa có trong ma trận: `SAL.PRICE_OVERRIDE` (sửa giá tự động, `FR-SAL-007`) và `SAL.ORDER_AMEND` (sửa đơn đã xác nhận, `FR-SAL-016`); seed không cấp mặc định, quản trị viên tự gán.
+- **EN:** No schema change; the section 1 functions and matrix are seeded. Two functions are added for the specific rights [04 · Sales](04-sales.md) requires but the matrix does not list: `SAL.PRICE_OVERRIDE` (override automatic prices, `FR-SAL-007`) and `SAL.ORDER_AMEND` (edit confirmed orders, `FR-SAL-016`); the seed grants them to nobody and administrators assign them.
+
+<details>
+<summary>Xem DDL / Show DDL</summary>
+
+```sql
+-- Chạy sau / Run after: P4
+
+INSERT INTO app_functions (code, module, name_vi, name_en, supported_actions, sort_order) VALUES
+  ('SAL.QUOTATION',        'SAL', 'Báo giá',                'Quotations',             '{VIEW,CREATE,EDIT,DELETE,APPROVE}', 510),
+  ('SAL.SALES_ORDER',      'SAL', 'Đơn bán hàng',           'Sales orders',           '{VIEW,CREATE,EDIT,DELETE,APPROVE}', 520),
+  ('SAL.SALES_RETURN',     'SAL', 'Trả hàng bán',           'Sales returns',          '{VIEW,CREATE,EDIT,DELETE,APPROVE}', 530),
+  ('ACC.CUSTOMER_INVOICE', 'ACC', 'Hóa đơn bán',            'Customer invoices',      '{VIEW,CREATE,EDIT,DELETE,APPROVE}', 720),
+  ('SAL.PRICE_OVERRIDE',   'SAL', 'Sửa giá bán tự động',    'Override sales prices',  '{EDIT}',                            521),
+  ('SAL.ORDER_AMEND',      'SAL', 'Sửa đơn đã xác nhận',    'Amend confirmed orders', '{EDIT}',                            522)
+ON CONFLICT (code) DO NOTHING;
+
+INSERT INTO role_permissions (role_id, function_code, action)
+SELECT r.id, m.function_code, a
+FROM (VALUES
+  ('SAL.QUOTATION',        'CEO', 'V'),   ('SAL.QUOTATION',        'SAL', 'VCE'),  ('SAL.QUOTATION',        'SLM', 'VCEDA'),
+  ('SAL.QUOTATION',        'AUD', 'V'),
+  ('SAL.SALES_ORDER',      'CEO', 'VA'),  ('SAL.SALES_ORDER',      'SAL', 'VCE'),  ('SAL.SALES_ORDER',      'SLM', 'VCEDA'),
+  ('SAL.SALES_ORDER',      'WH',  'V'),   ('SAL.SALES_ORDER',      'WHM', 'V'),    ('SAL.SALES_ORDER',      'ACC', 'V'),
+  ('SAL.SALES_ORDER',      'CAC', 'V'),   ('SAL.SALES_ORDER',      'AUD', 'V'),
+  ('SAL.SALES_RETURN',     'CEO', 'V'),   ('SAL.SALES_RETURN',     'SAL', 'VC'),   ('SAL.SALES_RETURN',     'SLM', 'VCEA'),
+  ('SAL.SALES_RETURN',     'WH',  'V'),   ('SAL.SALES_RETURN',     'WHM', 'V'),    ('SAL.SALES_RETURN',     'ACC', 'V'),
+  ('SAL.SALES_RETURN',     'CAC', 'VA'),  ('SAL.SALES_RETURN',     'AUD', 'V'),
+  ('ACC.CUSTOMER_INVOICE', 'CEO', 'V'),   ('ACC.CUSTOMER_INVOICE', 'SAL', 'V'),    ('ACC.CUSTOMER_INVOICE', 'SLM', 'V'),
+  ('ACC.CUSTOMER_INVOICE', 'ACC', 'VCE'), ('ACC.CUSTOMER_INVOICE', 'CAC', 'VCEDA'), ('ACC.CUSTOMER_INVOICE', 'AUD', 'V')
+) AS m(function_code, role_code, letters)
+JOIN roles r ON r.code = m.role_code
+CROSS JOIN LATERAL perm_letters(m.letters) AS a
+ON CONFLICT DO NOTHING;
+```
+
+</details>

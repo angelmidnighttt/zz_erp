@@ -38,7 +38,61 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P7](../
 |---|---|---|---|
 | FR-INT-021 | Thông tin xác thực của bên thứ ba được lưu mã hóa, không hiển thị lại sau khi nhập. | Third-party credentials are stored encrypted and never displayed after entry. | Must · P2 |
 
-## 5. Câu hỏi mở / Open questions
+## 5. Mô hình dữ liệu / Data model
+
+- **VI:** Tệp nhị phân nằm trên kho lưu trữ S3; cơ sở dữ liệu chỉ giữ siêu dữ liệu. Đây là khối DDL đầu tiên của P2 (các bảng khác của P2 tham chiếu `stored_files`).
+- **EN:** Binary files live in S3-compatible storage; the database only holds metadata. This is the first DDL block of P2 (other P2 tables reference `stored_files`).
+
+| Bảng / Table | Mục đích (VI) | Purpose (EN) |
+|---|---|---|
+| `stored_files` | Siêu dữ liệu của mọi tệp trên kho lưu trữ: đính kèm, logo, XML / PDF hóa đơn, bản in (`FR-INT-017`). | Metadata of every stored object: attachments, logo, invoice XML / PDF, printouts (`FR-INT-017`). |
+| `integration_credentials` | Thông tin xác thực bên thứ ba, phần bí mật mã hóa ở tầng ứng dụng; API không bao giờ trả lại (`FR-INT-021`). | Third-party credentials, with the secret encrypted in the application layer and never returned by the API (`FR-INT-021`). |
+
+<details>
+<summary>Xem DDL / Show DDL</summary>
+
+```sql
+-- Chạy sau / Run after: P1
+
+CREATE TABLE stored_files (
+  id               uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+  storage_bucket   varchar(63)  NOT NULL,
+  storage_key      varchar(500) NOT NULL,          -- khóa đối tượng / object key
+  original_name    varchar(255) NOT NULL,
+  content_type     varchar(100) NOT NULL,
+  size_bytes       bigint       NOT NULL CHECK (size_bytes >= 0),
+  checksum_sha256  char(64)     NOT NULL,
+  is_encrypted     boolean      NOT NULL DEFAULT true,  -- mã hóa phía máy chủ / server-side encryption
+  created_at       timestamptz  NOT NULL DEFAULT now(),
+  created_by       uuid         REFERENCES users(id),
+  updated_at       timestamptz  NOT NULL DEFAULT now(),
+  updated_by       uuid         REFERENCES users(id),
+  UNIQUE (storage_bucket, storage_key)
+);
+
+-- secret_ciphertext: AES-256-GCM, khóa lấy từ KMS / biến môi trường, không lưu trong DB
+-- secret_ciphertext: AES-256-GCM with the key from KMS / environment, never stored in the DB
+CREATE TABLE integration_credentials (
+  id                 uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+  provider_code      varchar(50)  NOT NULL,         -- vd / e.g. 'SMTP', 'EINVOICE_VNPT'
+  name               varchar(150) NOT NULL,
+  config             jsonb        NOT NULL DEFAULT '{}',  -- tham số không bí mật / non-secret settings
+  secret_ciphertext  bytea        NOT NULL,
+  secret_key_id      varchar(100) NOT NULL,         -- phục vụ xoay khóa / for key rotation
+  secret_hint        varchar(20),                   -- vd 4 ký tự cuối / e.g. last 4 characters
+  is_active          boolean      NOT NULL DEFAULT true,
+  version            integer      NOT NULL DEFAULT 1,
+  created_at         timestamptz  NOT NULL DEFAULT now(),
+  created_by         uuid         REFERENCES users(id),
+  updated_at         timestamptz  NOT NULL DEFAULT now(),
+  updated_by         uuid         REFERENCES users(id),
+  UNIQUE (provider_code, name)
+);
+```
+
+</details>
+
+## 6. Câu hỏi mở / Open questions
 
 | # | Câu hỏi (VI) | Question (EN) |
 |---|---|---|

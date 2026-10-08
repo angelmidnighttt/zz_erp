@@ -118,7 +118,237 @@ flowchart LR
 | BR-PUR-002 | Không nhận hàng khi không có đơn mua, trừ khi người dùng có quyền "nhận hàng không đơn". | Goods cannot be received without a PO unless the user has the "receive without PO" permission. | P4 |
 | BR-PUR-004 | Hóa đơn trùng (mã số thuế người bán + ký hiệu + số) bị chặn. | Duplicate bills (seller tax ID + series + number) are blocked. | P4 |
 
-## 7. Câu hỏi mở / Open questions
+## 7. Mô hình dữ liệu / Data model
+
+- **VI:** Phiếu nhập theo đơn mua là `stock_documents` (`reason = 'PURCHASE'`, `source_type = 'purchase_order'`), mỗi dòng trỏ về dòng đơn mua qua `source_line_id`; xác nhận phiếu nhập cập nhật `purchase_order_lines.qty_received`. Trả hàng nhà cung cấp sinh phiếu xuất `reason = 'SUPPLIER_RETURN'`. Công nợ phải trả theo hóa đơn được ghi nhận từ P6. Trạng thái Chờ duyệt (P7) và Chờ đối chiếu (P9) được thêm vào enum ở giai đoạn tương ứng.
+- **EN:** Receipts against a PO are `stock_documents` (`reason = 'PURCHASE'`, `source_type = 'purchase_order'`), each line pointing to its PO line via `source_line_id`; confirming the receipt updates `purchase_order_lines.qty_received`. Supplier returns create issues with `reason = 'SUPPLIER_RETURN'`. Open-item payables are recorded from P6. The Pending approval (P7) and Pending match (P9) statuses are added to the enums in those phases.
+
+```mermaid
+erDiagram
+    partners ||--o{ purchase_orders : "supplies"
+    purchase_orders ||--o{ purchase_order_lines : "contains"
+    purchase_orders ||--o{ purchase_order_charges : "charges"
+    purchase_order_lines ||--o{ stock_document_lines : "received as"
+    purchase_orders |o--o{ vendor_bills : "billed by"
+    vendor_bills ||--o{ vendor_bill_lines : "contains"
+    vendor_bills ||--o{ vendor_bill_taxes : "tax per rate"
+    purchase_order_lines |o--o{ vendor_bill_lines : "billed"
+    stock_document_lines |o--o{ vendor_bill_lines : "matched"
+    stock_documents ||--o{ purchase_returns : "returned from"
+    purchase_returns ||--o{ purchase_return_lines : "contains"
+```
+
+| Bảng / Table | Mục đích (VI) | Purpose (EN) |
+|---|---|---|
+| `purchase_orders`, `purchase_order_lines`, `purchase_order_charges` | Đơn mua, dòng hàng (theo dõi `qty_received`, `qty_billed`, `qty_returned` — `FR-PUR-011`) và chi phí khác. | POs, lines (tracking `qty_received`, `qty_billed`, `qty_returned` — `FR-PUR-011`) and other charges. |
+| `vendor_bills`, `vendor_bill_lines`, `vendor_bill_taxes` | Hóa đơn nhà cung cấp, dòng hàng liên kết dòng đơn mua / dòng phiếu nhập, tiền thuế theo từng thuế suất (`FR-PUR-017`). | Vendor bills, lines linked to PO lines / receipt lines, tax per rate (`FR-PUR-017`). |
+| `purchase_returns`, `purchase_return_lines` | Trả hàng nhà cung cấp từ phiếu nhập gốc; ghi nhận hóa đơn điều chỉnh của nhà cung cấp nếu có (`FR-PUR-024`). | Supplier returns from the original receipt; records the supplier's adjustment invoice if any (`FR-PUR-024`). |
+
+| Quy tắc / Rule | Cơ chế (VI) | Mechanism (EN) |
+|---|---|---|
+| BR-PUR-002 | Service từ chối phiếu nhập `reason = 'PURCHASE'` không có `source_id` nếu người dùng không có `CREATE` trên `INV.RECEIPT_WITHOUT_PO`. | The service rejects `reason = 'PURCHASE'` receipts without `source_id` unless the user has `CREATE` on `INV.RECEIPT_WITHOUT_PO`. |
+| BR-PUR-004, FR-PUR-020 | Unique index `vendor_bills_no_duplicate` trên MST người bán + ký hiệu + số, bỏ qua hóa đơn đã hủy. | Unique index `vendor_bills_no_duplicate` on seller tax ID + series + number, ignoring cancelled bills. |
+
+<details>
+<summary>Xem DDL / Show DDL</summary>
+
+```sql
+-- Chạy sau / Run after: 01-roles-permissions.md (P4)
+
+INSERT INTO document_types (code, module, name_vi, name_en, function_code, table_name, sort_order) VALUES
+  ('PO',  'PUR', 'Đơn mua hàng',          'Purchase order',  'PUR.PURCHASE_ORDER', 'purchase_orders',  410),
+  ('VB',  'ACC', 'Hóa đơn mua',           'Vendor bill',     'ACC.VENDOR_BILL',    'vendor_bills',     420),
+  ('PRT', 'PUR', 'Trả hàng nhà cung cấp', 'Supplier return', 'PUR.PURCHASE_ORDER', 'purchase_returns', 430);
+
+INSERT INTO document_sequences (document_type, prefix) VALUES ('PO', 'PO'), ('VB', 'VB'), ('PRT', 'PRT');
+
+CREATE TYPE po_status AS ENUM ('DRAFT','APPROVED','SENT','PARTIALLY_RECEIVED','RECEIVED','DONE','CLOSED','CANCELLED');
+
+CREATE TABLE purchase_orders (
+  id                     uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  doc_no                 varchar(30) UNIQUE,
+  branch_id              uuid        NOT NULL REFERENCES branches(id),
+  supplier_id            uuid        NOT NULL REFERENCES partners(id),
+  order_date             date        NOT NULL,
+  expected_date          date,
+  warehouse_id           uuid        REFERENCES warehouses(id),  -- kho nhận / receiving warehouse
+  currency_code          char(3)     NOT NULL REFERENCES currencies(code),
+  exchange_rate          dm_rate     NOT NULL DEFAULT 1,
+  payment_term_id        uuid        REFERENCES payment_terms(id),
+  status                 po_status   NOT NULL DEFAULT 'DRAFT',
+  sent_at                timestamptz,                             -- FR-PUR-010
+  supplier_confirmed_at  date,                                    -- FR-PUR-010
+  supplier_ref           varchar(50),
+  amount_untaxed         dm_amount   NOT NULL DEFAULT 0,
+  amount_tax             dm_amount   NOT NULL DEFAULT 0,
+  amount_total           dm_amount   NOT NULL DEFAULT 0,
+  amount_total_vnd       dm_amount   NOT NULL DEFAULT 0,
+  notes                  text,
+  confirmed_at           timestamptz,
+  confirmed_by           uuid        REFERENCES users(id),
+  cancel_reason          text,
+  version                integer     NOT NULL DEFAULT 1,
+  created_at             timestamptz NOT NULL DEFAULT now(),
+  created_by             uuid        REFERENCES users(id),
+  updated_at             timestamptz NOT NULL DEFAULT now(),
+  updated_by             uuid        REFERENCES users(id),
+  CHECK (status IN ('DRAFT','CANCELLED') OR doc_no IS NOT NULL)
+);
+CREATE INDEX ON purchase_orders (supplier_id, order_date);
+-- FR-PUR-011: cảnh báo đơn trễ hạn giao / late-delivery alerts
+CREATE INDEX ON purchase_orders (expected_date) WHERE status IN ('APPROVED','SENT','PARTIALLY_RECEIVED');
+
+CREATE TABLE purchase_order_lines (
+  id               uuid      PRIMARY KEY DEFAULT gen_random_uuid(),
+  po_id            uuid      NOT NULL REFERENCES purchase_orders(id),
+  line_no          smallint  NOT NULL,
+  product_id       uuid      NOT NULL REFERENCES products(id),
+  description      varchar(500),
+  uom_id           uuid      NOT NULL REFERENCES uoms(id),
+  uom_factor       dm_rate   NOT NULL DEFAULT 1,
+  qty              dm_qty    NOT NULL CHECK (qty > 0),
+  unit_price       dm_price  NOT NULL CHECK (unit_price >= 0),
+  discount_pct     dm_pct    NOT NULL DEFAULT 0,
+  discount_amount  dm_amount NOT NULL DEFAULT 0,
+  tax_id           uuid      REFERENCES taxes(id),
+  amount_untaxed   dm_amount NOT NULL,
+  amount_tax       dm_amount NOT NULL DEFAULT 0,
+  expected_date    date,
+  qty_received     dm_qty    NOT NULL DEFAULT 0,
+  qty_billed       dm_qty    NOT NULL DEFAULT 0,
+  qty_returned     dm_qty    NOT NULL DEFAULT 0,
+  UNIQUE (po_id, line_no)
+);
+CREATE INDEX ON purchase_order_lines (product_id);
+
+CREATE TABLE purchase_order_charges (
+  id           uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+  po_id        uuid         NOT NULL REFERENCES purchase_orders(id),
+  description  varchar(255) NOT NULL,
+  amount       dm_amount    NOT NULL,
+  tax_id       uuid         REFERENCES taxes(id),
+  amount_tax   dm_amount    NOT NULL DEFAULT 0
+);
+
+CREATE TYPE vendor_bill_status AS ENUM ('DRAFT','POSTED','PARTIALLY_PAID','PAID','CANCELLED');
+
+CREATE TABLE vendor_bills (
+  id                 uuid               PRIMARY KEY DEFAULT gen_random_uuid(),
+  doc_no             varchar(30)        UNIQUE,                 -- số nội bộ / internal number
+  branch_id          uuid               NOT NULL REFERENCES branches(id),
+  supplier_id        uuid               NOT NULL REFERENCES partners(id),
+  purchase_order_id  uuid               REFERENCES purchase_orders(id),
+  seller_tax_code    dm_tax_code        NOT NULL,               -- MST người bán trên hóa đơn
+  invoice_series     varchar(10)        NOT NULL,               -- ký hiệu / series, vd / e.g. 1C26TAA
+  invoice_no         varchar(20)        NOT NULL,
+  invoice_date       date               NOT NULL,
+  accounting_date    date               NOT NULL,
+  currency_code      char(3)            NOT NULL REFERENCES currencies(code),
+  exchange_rate      dm_rate            NOT NULL DEFAULT 1,
+  payment_term_id    uuid               REFERENCES payment_terms(id),
+  due_date           date,
+  amount_untaxed     dm_amount          NOT NULL DEFAULT 0,
+  amount_tax         dm_amount          NOT NULL DEFAULT 0,
+  amount_total       dm_amount          NOT NULL DEFAULT 0,
+  amount_total_vnd   dm_amount          NOT NULL DEFAULT 0,
+  description        text,
+  status             vendor_bill_status NOT NULL DEFAULT 'DRAFT',
+  posted_at          timestamptz,
+  posted_by          uuid               REFERENCES users(id),
+  cancel_reason      text,
+  version            integer            NOT NULL DEFAULT 1,
+  created_at         timestamptz        NOT NULL DEFAULT now(),
+  created_by         uuid               REFERENCES users(id),
+  updated_at         timestamptz        NOT NULL DEFAULT now(),
+  updated_by         uuid               REFERENCES users(id)
+);
+-- BR-PUR-004, FR-PUR-020
+CREATE UNIQUE INDEX vendor_bills_no_duplicate
+  ON vendor_bills (seller_tax_code, upper(invoice_series), invoice_no)
+  WHERE status <> 'CANCELLED';
+CREATE INDEX ON vendor_bills (supplier_id, invoice_date);
+
+CREATE TABLE vendor_bill_lines (
+  id               uuid      PRIMARY KEY DEFAULT gen_random_uuid(),
+  bill_id          uuid      NOT NULL REFERENCES vendor_bills(id),
+  line_no          smallint  NOT NULL,
+  po_line_id       uuid      REFERENCES purchase_order_lines(id),
+  receipt_line_id  uuid      REFERENCES stock_document_lines(id),
+  product_id       uuid      REFERENCES products(id),  -- NULL = dòng chi phí không mã / uncoded expense line (Q-PUR-03)
+  description      varchar(500),
+  uom_id           uuid      REFERENCES uoms(id),
+  qty              dm_qty    NOT NULL DEFAULT 1 CHECK (qty > 0),
+  unit_price       dm_price  NOT NULL,
+  discount_amount  dm_amount NOT NULL DEFAULT 0,
+  tax_id           uuid      REFERENCES taxes(id),
+  amount_untaxed   dm_amount NOT NULL,
+  amount_tax       dm_amount NOT NULL DEFAULT 0,
+  UNIQUE (bill_id, line_no),
+  CHECK (product_id IS NOT NULL OR description IS NOT NULL)
+);
+CREATE INDEX ON vendor_bill_lines (po_line_id);
+CREATE INDEX ON vendor_bill_lines (receipt_line_id);
+
+-- Tiền thuế theo từng thuế suất như in trên hóa đơn / tax per rate as printed on the bill
+CREATE TABLE vendor_bill_taxes (
+  bill_id         uuid      NOT NULL REFERENCES vendor_bills(id),
+  tax_id          uuid      NOT NULL REFERENCES taxes(id),
+  taxable_amount  dm_amount NOT NULL,
+  tax_amount      dm_amount NOT NULL,
+  PRIMARY KEY (bill_id, tax_id)
+);
+
+CREATE TYPE purchase_return_status AS ENUM ('DRAFT','CONFIRMED','CANCELLED');
+
+CREATE TABLE purchase_returns (
+  id                   uuid                   PRIMARY KEY DEFAULT gen_random_uuid(),
+  doc_no               varchar(30)            UNIQUE,
+  branch_id            uuid                   NOT NULL REFERENCES branches(id),
+  supplier_id          uuid                   NOT NULL REFERENCES partners(id),
+  return_date          date                   NOT NULL,
+  receipt_id           uuid                   NOT NULL REFERENCES stock_documents(id),  -- phiếu nhập gốc / original receipt
+  vendor_bill_id       uuid                   REFERENCES vendor_bills(id),
+  issue_id             uuid                   REFERENCES stock_documents(id),           -- phiếu xuất trả / return issue
+  reason               text                   NOT NULL,
+  currency_code        char(3)                NOT NULL REFERENCES currencies(code),
+  exchange_rate        dm_rate                NOT NULL DEFAULT 1,
+  amount_untaxed       dm_amount              NOT NULL DEFAULT 0,
+  amount_tax           dm_amount              NOT NULL DEFAULT 0,
+  amount_total         dm_amount              NOT NULL DEFAULT 0,
+  amount_total_vnd     dm_amount              NOT NULL DEFAULT 0,
+  adj_invoice_series   varchar(10),           -- hóa đơn điều chỉnh của NCC / supplier's adjustment invoice
+  adj_invoice_no       varchar(20),
+  adj_invoice_date     date,
+  status               purchase_return_status NOT NULL DEFAULT 'DRAFT',
+  confirmed_at         timestamptz,
+  confirmed_by         uuid                   REFERENCES users(id),
+  version              integer                NOT NULL DEFAULT 1,
+  created_at           timestamptz            NOT NULL DEFAULT now(),
+  created_by           uuid                   REFERENCES users(id),
+  updated_at           timestamptz            NOT NULL DEFAULT now(),
+  updated_by           uuid                   REFERENCES users(id)
+);
+
+CREATE TABLE purchase_return_lines (
+  id               uuid      PRIMARY KEY DEFAULT gen_random_uuid(),
+  return_id        uuid      NOT NULL REFERENCES purchase_returns(id),
+  line_no          smallint  NOT NULL,
+  receipt_line_id  uuid      NOT NULL REFERENCES stock_document_lines(id),
+  product_id       uuid      NOT NULL REFERENCES products(id),
+  uom_id           uuid      NOT NULL REFERENCES uoms(id),
+  uom_factor       dm_rate   NOT NULL DEFAULT 1,
+  qty              dm_qty    NOT NULL CHECK (qty > 0),
+  unit_price       dm_price  NOT NULL,
+  tax_id           uuid      REFERENCES taxes(id),
+  amount_untaxed   dm_amount NOT NULL,
+  amount_tax       dm_amount NOT NULL DEFAULT 0,
+  UNIQUE (return_id, line_no)
+);
+```
+
+</details>
+
+## 8. Câu hỏi mở / Open questions
 
 | # | Câu hỏi (VI) | Question (EN) |
 |---|---|---|

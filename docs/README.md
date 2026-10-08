@@ -119,6 +119,22 @@ Issued IDs are **never reused**. Removed requirements are marked ~~struck throug
 - Khi có khác biệt giữa hai ngôn ngữ, **bản Tiếng Việt được ưu tiên áp dụng**.
   In case of discrepancy between the two languages, **the Vietnamese version prevails**.
 
+### Lược đồ cơ sở dữ liệu / Database schema
+
+- **VI:** Mỗi tệp phân hệ có mục "Mô hình dữ liệu / Data model" kèm DDL PostgreSQL 16 cho phần việc của giai đoạn đó; giai đoạn sau chỉ `CREATE` bảng mới hoặc `ALTER` bảng đã có, nên chạy DDL lần lượt từ P1 đến giai đoạn đang làm sẽ ra lược đồ đầy đủ. Dòng đầu mỗi khối DDL ghi tệp cần chạy trước (`-- Chạy sau / Run after`). Đây là bản nháp, chuyển thành migration khi thiết kế chi tiết.
+- **EN:** Each module file has a "Data model" section with PostgreSQL 16 DDL for that phase's work; later phases only `CREATE` new tables or `ALTER` existing ones, so running the DDL from P1 up to the current phase yields the full schema. The first line of each DDL block names the files to run first (`-- Run after`). This is a draft, to be turned into migrations during detailed design.
+
+| Quy ước (VI) | Convention (EN) |
+|---|---|
+| Khóa chính `uuid DEFAULT gen_random_uuid()`; bảng nhật ký khối lượng lớn dùng `bigint GENERATED ALWAYS AS IDENTITY`. | Primary keys are `uuid DEFAULT gen_random_uuid()`; high-volume log tables use `bigint GENERATED ALWAYS AS IDENTITY`. |
+| Bảng danh mục và chứng từ có `created_at`, `created_by`, `updated_at`, `updated_by` và `version` (khóa lạc quan, `NFR-DAT-003`); bảng dòng chứng từ dùng các cột này của chứng từ cha. | Master and document tables carry `created_at`, `created_by`, `updated_at`, `updated_by` and `version` (optimistic locking, `NFR-DAT-003`); document line tables rely on their parent's columns. |
+| Số tiền, số lượng, đơn giá, tỷ giá, tỷ lệ dùng domain `dm_amount`, `dm_qty`, `dm_price`, `dm_rate`, `dm_pct` (kiểu `numeric`, `NFR-DAT-001`), khai báo ở [P2 · SYS](phase-02-organization-master-data/02-system-administration.md). | Amounts, quantities, prices, rates and percentages use the `dm_amount`, `dm_qty`, `dm_price`, `dm_rate`, `dm_pct` domains (`numeric`, `NFR-DAT-001`), declared in [P2 · SYS](phase-02-organization-master-data/02-system-administration.md). |
+| Chứng từ có `doc_no` duy nhất, để trống khi còn nháp và được cấp khi xác nhận (`FR-SYS-019`); `branch_id` bắt buộc (`FR-SYS-002`); `owner_id`, `department_id` bổ sung ở P7 cho phạm vi dữ liệu. | Documents have a unique `doc_no`, empty while draft and assigned on confirmation (`FR-SYS-019`); `branch_id` is mandatory (`FR-SYS-002`); `owner_id`, `department_id` are added in P7 for data scope. |
+| Chứng từ ngoại tệ lưu cả nguyên tệ và VND (`currency_code`, `exchange_rate`, `…_vnd`). | Foreign-currency documents store both transaction currency and VND (`currency_code`, `exchange_rate`, `…_vnd`). |
+| Danh mục không xóa khi đã dùng (`BR-SYS-002`): khóa ngoại không `ON DELETE CASCADE`, ngừng dùng bằng `is_active`. | Used master data is never deleted (`BR-SYS-002`): foreign keys have no `ON DELETE CASCADE`; deactivate with `is_active`. |
+| Thời điểm lưu `timestamptz` (UTC); ngày chứng từ lưu `date` theo giờ Việt Nam (`NFR-L10N-005`). | Timestamps are `timestamptz` (UTC); document dates are `date` in Vietnam local time (`NFR-L10N-005`). |
+| Tham chiếu đa hình (đính kèm, nguồn chứng từ…) dùng cặp `entity_type` / `entity_id` hoặc `source_type` / `source_id`, không có khóa ngoại. | Polymorphic references (attachments, document sources…) use `entity_type` / `entity_id` or `source_type` / `source_id` pairs without foreign keys. |
+
 ---
 
 ## Bước tiếp theo / Next steps

@@ -39,3 +39,35 @@ Ký hiệu / Legend: `V` Xem / View · `C` Tạo / Create · `E` Sửa / Edit ·
 
 - **VI:** Từ P3 đến P6 chưa có luồng duyệt: "duyệt" ở đây là người có quyền `APPROVE` trên Kiểm kê bấm xác nhận (xem [02 · Quản trị hệ thống](02-system-administration.md)).
 - **EN:** From P3 to P6 there are no approval flows: "approval" here means a user holding `APPROVE` on stock counts confirms the adjustment (see [02 · System administration](02-system-administration.md)).
+
+## 4. Mô hình dữ liệu / Data model
+
+- **VI:** Không đổi lược đồ; chỉ nạp chức năng và ma trận mục 1 bằng hàm `perm_letters` ([P2](../phase-02-organization-master-data/01-roles-permissions.md)). `BR-ROL-004` được đáp ứng vì `WH` không có dòng `APPROVE` trên `INV.STOCK_COUNT`. Từ P3, khối seed của `01-roles-permissions.md` chạy đầu tiên trong giai đoạn vì các bảng `document_types` của phân hệ tham chiếu tới `app_functions`.
+- **EN:** No schema change; only the section 1 functions and matrix are seeded with `perm_letters` ([P2](../phase-02-organization-master-data/01-roles-permissions.md)). `BR-ROL-004` holds because `WH` has no `APPROVE` row on `INV.STOCK_COUNT`. From P3 on, the `01-roles-permissions.md` seed runs first in each phase because module `document_types` rows reference `app_functions`.
+
+<details>
+<summary>Xem DDL / Show DDL</summary>
+
+```sql
+-- Chạy sau / Run after: P2
+
+INSERT INTO app_functions (code, module, name_vi, name_en, supported_actions, sort_order) VALUES
+  ('INV.STOCK_MOVE',  'INV', 'Nhập / xuất / chuyển kho', 'Receipts, issues, transfers', '{VIEW,CREATE,EDIT,DELETE,APPROVE}', 310),
+  ('INV.STOCK_COUNT', 'INV', 'Kiểm kê',                  'Stock count',                 '{VIEW,CREATE,EDIT,DELETE,APPROVE}', 320)
+ON CONFLICT (code) DO NOTHING;
+
+INSERT INTO role_permissions (role_id, function_code, action)
+SELECT r.id, m.function_code, a
+FROM (VALUES
+  ('INV.STOCK_MOVE',  'CEO', 'V'),   ('INV.STOCK_MOVE',  'PUR', 'V'),    ('INV.STOCK_MOVE',  'PUM', 'V'),
+  ('INV.STOCK_MOVE',  'WH',  'VCE'), ('INV.STOCK_MOVE',  'WHM', 'VCEDA'), ('INV.STOCK_MOVE', 'ACC', 'V'),
+  ('INV.STOCK_MOVE',  'CAC', 'V'),   ('INV.STOCK_MOVE',  'AUD', 'V'),
+  ('INV.STOCK_COUNT', 'CEO', 'V'),   ('INV.STOCK_COUNT', 'WH',  'VCE'),  ('INV.STOCK_COUNT', 'WHM', 'VCEA'),
+  ('INV.STOCK_COUNT', 'ACC', 'V'),   ('INV.STOCK_COUNT', 'CAC', 'VA'),   ('INV.STOCK_COUNT', 'AUD', 'V')
+) AS m(function_code, role_code, letters)
+JOIN roles r ON r.code = m.role_code
+CROSS JOIN LATERAL perm_letters(m.letters) AS a
+ON CONFLICT DO NOTHING;
+```
+
+</details>

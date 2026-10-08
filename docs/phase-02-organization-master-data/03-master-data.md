@@ -134,7 +134,474 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P7](../
 | BR-MDM-005 | Nếu không có tỷ giá cho ngày chứng từ, hệ thống dùng tỷ giá gần nhất trước đó và hiển thị cảnh báo. | If no rate exists for the document date, the most recent prior rate is used and a warning is shown. | P2 |
 | BR-MDM-006 | Sản phẩm loại dịch vụ không phát sinh tồn kho. | Service-type products never carry stock. | P2 |
 
-## 4. Câu hỏi mở / Open questions
+## 4. Mô hình dữ liệu / Data model
+
+- **VI:** Khách hàng và nhà cung cấp dùng chung bảng `partners` (`FR-MDM-009`), phân biệt bằng `is_customer` / `is_supplier`. Tài khoản kế toán được lưu dưới dạng mã (`…_account_code`) vì hệ thống tài khoản có từ P9; P9 bổ sung khóa ngoại tới `gl_accounts`. Hình ảnh sản phẩm lưu qua `attachments`. Theo dõi lô / serial (`FR-MDM-004`) và tài khoản mặc định theo nhóm (`FR-MDM-006`) được thêm ở P8, P9.
+- **EN:** Customers and suppliers share the `partners` table (`FR-MDM-009`), flagged by `is_customer` / `is_supplier`. GL accounts are stored as codes (`…_account_code`) because the chart of accounts arrives in P9; P9 adds foreign keys to `gl_accounts`. Product images are stored through `attachments`. Lot / serial tracking (`FR-MDM-004`) and category default accounts (`FR-MDM-006`) are added in P8 and P9.
+
+```mermaid
+erDiagram
+    product_categories |o--o{ product_categories : "parent of"
+    product_categories ||--o{ products : "groups"
+    uoms ||--o{ products : "base UoM"
+    products ||--o{ product_uoms : "converts to"
+    taxes |o--o{ products : "default VAT"
+    price_lists ||--o{ price_list_items : "contains"
+    products ||--o{ price_list_items : "priced in"
+    partner_groups |o--o{ partners : "groups"
+    price_lists |o--o{ partners : "assigned to"
+    price_lists |o--o{ partner_groups : "assigned to"
+    partners ||--o{ partner_addresses : "ships to"
+    partners ||--o{ partner_contacts : "has"
+    partners ||--o{ partner_bank_accounts : "paid to"
+    employees |o--o{ partners : "salesperson"
+    departments |o--o{ employees : "employs"
+    branches ||--o{ warehouses : "owns"
+    currencies ||--o{ exchange_rates : "rated"
+    currencies ||--o{ company_bank_accounts : "in"
+```
+
+| Bảng / Table | Mục đích (VI) | Purpose (EN) |
+|---|---|---|
+| `currencies`, `exchange_rates` | Tiền tệ (cách đọc bằng chữ VI / EN) và tỷ giá theo ngày; tra tỷ giá gần nhất `rate_date <= ngày chứng từ` (`BR-MDM-005`). | Currencies (amount-in-words wording VI / EN) and daily rates; look up the latest `rate_date <= document date` (`BR-MDM-005`). |
+| `taxes` | Thuế suất GTGT có hiệu lực từ – đến; KCT / KKKNT không có `rate`. | VAT codes with validity dates; KCT / KKKNT have no `rate`. |
+| `payment_terms`, `payment_methods` | Điều khoản và phương thức thanh toán. | Payment terms and methods. |
+| `company_bank_accounts` | Tài khoản ngân hàng của công ty (TK 112x). | Company bank accounts (112x). |
+| `uoms`, `product_categories`, `products`, `product_uoms` | Đơn vị tính, nhóm dạng cây, sản phẩm, quy đổi đơn vị (`factor` = số đơn vị cơ bản trong 1 đơn vị này). | UoMs, category tree, products, UoM conversions (`factor` = base units per one of this UoM). |
+| `employees` | Danh mục nhân viên cơ bản (`FR-MDM-022`); `users.employee_id` liên kết tài khoản với nhân viên. | Basic employee list (`FR-MDM-022`); `users.employee_id` links accounts to employees. |
+| `warehouses` | Kho thuộc chi nhánh, có loại kho. | Warehouses per branch, with a type. |
+| `price_lists`, `price_list_items` | Bảng giá bán; dòng giá không được chồng lấn thời gian hiệu lực cho cùng sản phẩm + đơn vị tính. | Sales price lists; price lines for the same product + UoM must not overlap in validity. |
+| `partner_groups`, `partners`, `partner_addresses`, `partner_contacts`, `partner_bank_accounts` | Nhóm đối tác, đối tác, địa chỉ giao hàng, người liên hệ, tài khoản ngân hàng của đối tác. | Partner groups, partners, shipping addresses, contacts, partner bank accounts. |
+
+| Quy tắc / Rule | Cơ chế (VI) | Mechanism (EN) |
+|---|---|---|
+| BR-MDM-001 | `code` là `UNIQUE`; tầng service chặn sửa mã khi đã có chứng từ tham chiếu. | `code` is `UNIQUE`; the service layer blocks code changes once documents reference the record. |
+| BR-MDM-002 | Tầng service chặn đổi `base_uom_id` (và `tracking_mode` từ P8) khi đã có `stock_moves`. | The service layer blocks changing `base_uom_id` (and `tracking_mode` from P8) once `stock_moves` exist. |
+| BR-MDM-003 | Khóa ngoại không cascade; ngừng dùng bằng `is_active = false`. | Non-cascading foreign keys; deactivate with `is_active = false`. |
+| BR-MDM-006 | Chứng từ kho từ chối dòng có `product_type = 'SERVICE'` (P3). | Stock documents reject lines with `product_type = 'SERVICE'` (P3). |
+
+<details>
+<summary>Xem DDL / Show DDL</summary>
+
+```sql
+-- Chạy sau / Run after: 02-system-administration.md, 07-accounting-finance.md (P2)
+
+-- ===== Tiền tệ & tỷ giá / Currencies & rates (FR-MDM-016) =====
+CREATE TABLE currencies (
+  code            char(3)      PRIMARY KEY CHECK (code ~ '^[A-Z]{3}$'),  -- ISO 4217
+  name            varchar(100) NOT NULL,
+  name_en         varchar(100) NOT NULL,
+  symbol          varchar(10)  NOT NULL,
+  decimals        smallint     NOT NULL DEFAULT 2 CHECK (decimals BETWEEN 0 AND 4),
+  words_major_vi  varchar(30)  NOT NULL,  -- 'đồng', 'đô la Mỹ'
+  words_minor_vi  varchar(30),            -- 'xu', 'cent'
+  words_major_en  varchar(30)  NOT NULL,  -- 'dong', 'US dollars'
+  words_minor_en  varchar(30),
+  is_active       boolean      NOT NULL DEFAULT true,
+  version         integer      NOT NULL DEFAULT 1,
+  created_at      timestamptz  NOT NULL DEFAULT now(),
+  created_by      uuid         REFERENCES users(id),
+  updated_at      timestamptz  NOT NULL DEFAULT now(),
+  updated_by      uuid         REFERENCES users(id)
+);
+
+INSERT INTO currencies (code, name, name_en, symbol, decimals, words_major_vi, words_minor_vi, words_major_en, words_minor_en) VALUES
+  ('VND', 'Đồng Việt Nam', 'Vietnamese dong', '₫', 0, 'đồng',     NULL,  'dong',       NULL),
+  ('USD', 'Đô la Mỹ',      'US dollar',       '$', 2, 'đô la Mỹ', 'xu',  'US dollars', 'cents');
+
+ALTER TABLE company_profile
+  ADD CONSTRAINT company_profile_currency_fk
+  FOREIGN KEY (functional_currency_code) REFERENCES currencies(code);
+
+CREATE TYPE exchange_rate_source AS ENUM ('MANUAL','FILE');
+
+-- Không lưu dòng cho VND (tỷ giá = 1) / No rows for VND (rate = 1)
+CREATE TABLE exchange_rates (
+  currency_code  char(3)              NOT NULL REFERENCES currencies(code),
+  rate_date      date                 NOT NULL,
+  buying_rate    dm_rate,
+  selling_rate   dm_rate,
+  transfer_rate  dm_rate              NOT NULL,
+  source         exchange_rate_source NOT NULL DEFAULT 'MANUAL',
+  created_at     timestamptz          NOT NULL DEFAULT now(),
+  created_by     uuid                 REFERENCES users(id),
+  updated_at     timestamptz          NOT NULL DEFAULT now(),
+  updated_by     uuid                 REFERENCES users(id),
+  PRIMARY KEY (currency_code, rate_date)
+);
+
+-- ===== Thuế suất / Tax codes (FR-MDM-017) =====
+CREATE TYPE vat_category AS ENUM ('RATED','NOT_SUBJECT','NOT_DECLARED');  -- có thuế suất / KCT / KKKNT
+
+CREATE TABLE taxes (
+  id                   uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+  code                 varchar(20)  NOT NULL UNIQUE,  -- 'VAT10', 'VAT8', 'VAT5', 'VAT0', 'KCT', 'KKKNT'
+  name                 varchar(100) NOT NULL,
+  name_en              varchar(100) NOT NULL,
+  category             vat_category NOT NULL DEFAULT 'RATED',
+  rate                 dm_pct,                         -- NULL khi KCT / KKKNT
+  valid_from           date         NOT NULL,
+  valid_to             date,
+  input_account_code   varchar(20),                    -- vd / e.g. 1331 (FK ở / FK in P9)
+  output_account_code  varchar(20),                    -- vd / e.g. 33311
+  is_active            boolean      NOT NULL DEFAULT true,
+  version              integer      NOT NULL DEFAULT 1,
+  created_at           timestamptz  NOT NULL DEFAULT now(),
+  created_by           uuid         REFERENCES users(id),
+  updated_at           timestamptz  NOT NULL DEFAULT now(),
+  updated_by           uuid         REFERENCES users(id),
+  CHECK ((category = 'RATED') = (rate IS NOT NULL)),
+  CHECK (valid_to IS NULL OR valid_to >= valid_from)
+);
+
+-- ===== Thanh toán / Payments (FR-MDM-018 – 020) =====
+CREATE TYPE payment_term_type AS ENUM ('IMMEDIATE','NET_DAYS','EOM_PLUS_DAYS');
+
+CREATE TABLE payment_terms (
+  id          uuid              PRIMARY KEY DEFAULT gen_random_uuid(),
+  code        varchar(20)       NOT NULL UNIQUE,
+  name        varchar(100)      NOT NULL,
+  name_en     varchar(100)      NOT NULL,
+  term_type   payment_term_type NOT NULL,
+  days        smallint          NOT NULL DEFAULT 0 CHECK (days >= 0),
+  is_active   boolean           NOT NULL DEFAULT true,
+  version     integer           NOT NULL DEFAULT 1,
+  created_at  timestamptz       NOT NULL DEFAULT now(),
+  created_by  uuid              REFERENCES users(id),
+  updated_at  timestamptz       NOT NULL DEFAULT now(),
+  updated_by  uuid              REFERENCES users(id),
+  CHECK (term_type <> 'IMMEDIATE' OR days = 0)
+);
+
+CREATE TYPE payment_method_type AS ENUM ('CASH','BANK_TRANSFER','CARD','NETTING');
+
+CREATE TABLE payment_methods (
+  id                    uuid                PRIMARY KEY DEFAULT gen_random_uuid(),
+  code                  varchar(20)         NOT NULL UNIQUE,
+  name                  varchar(100)        NOT NULL,
+  name_en               varchar(100)        NOT NULL,
+  method_type           payment_method_type NOT NULL,
+  default_account_code  varchar(20),        -- 1111 / 1121… (FK ở / FK in P9)
+  is_active             boolean             NOT NULL DEFAULT true,
+  version               integer             NOT NULL DEFAULT 1,
+  created_at            timestamptz         NOT NULL DEFAULT now(),
+  created_by            uuid                REFERENCES users(id),
+  updated_at            timestamptz         NOT NULL DEFAULT now(),
+  updated_by            uuid                REFERENCES users(id)
+);
+
+CREATE TABLE company_bank_accounts (
+  id               uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+  account_no       varchar(30)  NOT NULL,
+  account_name     varchar(255) NOT NULL,
+  bank_name        varchar(150) NOT NULL,
+  bank_branch      varchar(150),
+  currency_code    char(3)      NOT NULL REFERENCES currencies(code),
+  gl_account_code  varchar(20)  NOT NULL,  -- 112x (FK ở / FK in P9)
+  branch_id        uuid         REFERENCES branches(id),
+  is_active        boolean      NOT NULL DEFAULT true,
+  version          integer      NOT NULL DEFAULT 1,
+  created_at       timestamptz  NOT NULL DEFAULT now(),
+  created_by       uuid         REFERENCES users(id),
+  updated_at       timestamptz  NOT NULL DEFAULT now(),
+  updated_by       uuid         REFERENCES users(id),
+  UNIQUE (bank_name, account_no)
+);
+
+-- ===== Sản phẩm / Products (FR-MDM-001 – 003) =====
+CREATE TABLE uoms (
+  id          uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+  code        varchar(20)  NOT NULL UNIQUE,
+  name        varchar(50)  NOT NULL,
+  name_en     varchar(50)  NOT NULL,
+  is_active   boolean      NOT NULL DEFAULT true,
+  version     integer      NOT NULL DEFAULT 1,
+  created_at  timestamptz  NOT NULL DEFAULT now(),
+  created_by  uuid         REFERENCES users(id),
+  updated_at  timestamptz  NOT NULL DEFAULT now(),
+  updated_by  uuid         REFERENCES users(id)
+);
+
+CREATE TABLE product_categories (
+  id              uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+  code            varchar(30)  NOT NULL UNIQUE,
+  name            varchar(255) NOT NULL,
+  name_en         varchar(255),
+  parent_id       uuid         REFERENCES product_categories(id),
+  default_tax_id  uuid         REFERENCES taxes(id),  -- sản phẩm kế thừa nếu không khai riêng
+  is_active       boolean      NOT NULL DEFAULT true,
+  version         integer      NOT NULL DEFAULT 1,
+  created_at      timestamptz  NOT NULL DEFAULT now(),
+  created_by      uuid         REFERENCES users(id),
+  updated_at      timestamptz  NOT NULL DEFAULT now(),
+  updated_by      uuid         REFERENCES users(id),
+  CHECK (parent_id <> id)
+);
+CREATE INDEX ON product_categories (parent_id);
+
+CREATE TYPE product_type AS ENUM ('STOCKABLE','CONSUMABLE','SERVICE');
+
+CREATE TABLE products (
+  id                  uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+  code                varchar(50)  NOT NULL UNIQUE,
+  name                varchar(255) NOT NULL,
+  name_en             varchar(255),
+  product_type        product_type NOT NULL DEFAULT 'STOCKABLE',
+  category_id         uuid         NOT NULL REFERENCES product_categories(id),
+  base_uom_id         uuid         NOT NULL REFERENCES uoms(id),
+  barcode             varchar(50)  UNIQUE,
+  brand               varchar(100),
+  specification       text,
+  weight_kg           numeric(12,4),
+  length_cm           numeric(10,2),
+  width_cm            numeric(10,2),
+  height_cm           numeric(10,2),
+  default_tax_id      uuid         REFERENCES taxes(id),  -- NULL = theo nhóm / from category
+  ref_sale_price      dm_price,
+  ref_purchase_price  dm_price,
+  is_active           boolean      NOT NULL DEFAULT true,
+  version             integer      NOT NULL DEFAULT 1,
+  created_at          timestamptz  NOT NULL DEFAULT now(),
+  created_by          uuid         REFERENCES users(id),
+  updated_at          timestamptz  NOT NULL DEFAULT now(),
+  updated_by          uuid         REFERENCES users(id)
+);
+CREATE INDEX ON products (category_id);
+-- FR-SYS-028: tìm không dấu; truy vấn phải dùng đúng biểu thức này
+-- Accent-insensitive search; queries must use this exact expression
+CREATE INDEX products_search_idx ON products
+  USING gin (lower(f_unaccent(code || ' ' || name)) gin_trgm_ops);
+
+-- Không cần dòng cho đơn vị cơ bản (hệ số 1) / No row needed for the base UoM (factor 1)
+CREATE TABLE product_uoms (
+  id          uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id  uuid         NOT NULL REFERENCES products(id),
+  uom_id      uuid         NOT NULL REFERENCES uoms(id),
+  factor      dm_rate      NOT NULL,  -- 1 thùng = 24 chai → factor = 24
+  barcode     varchar(50)  UNIQUE,
+  is_active   boolean      NOT NULL DEFAULT true,
+  created_at  timestamptz  NOT NULL DEFAULT now(),
+  created_by  uuid         REFERENCES users(id),
+  updated_at  timestamptz  NOT NULL DEFAULT now(),
+  updated_by  uuid         REFERENCES users(id),
+  UNIQUE (product_id, uom_id)
+);
+
+-- ===== Nhân viên & kho / Employees & warehouses (FR-MDM-021, FR-MDM-022) =====
+CREATE TABLE employees (
+  id             uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+  code           varchar(20)  NOT NULL UNIQUE,
+  full_name      varchar(150) NOT NULL,
+  department_id  uuid         REFERENCES departments(id),
+  job_title      varchar(100),
+  email          varchar(255),
+  phone          varchar(30),
+  is_active      boolean      NOT NULL DEFAULT true,
+  version        integer      NOT NULL DEFAULT 1,
+  created_at     timestamptz  NOT NULL DEFAULT now(),
+  created_by     uuid         REFERENCES users(id),
+  updated_at     timestamptz  NOT NULL DEFAULT now(),
+  updated_by     uuid         REFERENCES users(id)
+);
+CREATE INDEX employees_search_idx ON employees
+  USING gin (lower(f_unaccent(code || ' ' || full_name)) gin_trgm_ops);
+
+-- FR-SYS-004 (mở rộng P2 / P2 extension): liên kết người dùng với nhân viên
+ALTER TABLE users ADD COLUMN employee_id uuid UNIQUE REFERENCES employees(id);
+
+ALTER TABLE branches
+  ADD CONSTRAINT branches_manager_fk FOREIGN KEY (manager_employee_id) REFERENCES employees(id);
+ALTER TABLE departments
+  ADD CONSTRAINT departments_head_fk FOREIGN KEY (head_employee_id) REFERENCES employees(id);
+
+CREATE TYPE warehouse_type AS ENUM ('NORMAL','IN_TRANSIT','CONSIGNMENT','DEFECTIVE');
+
+CREATE TABLE warehouses (
+  id                  uuid           PRIMARY KEY DEFAULT gen_random_uuid(),
+  code                varchar(20)    NOT NULL UNIQUE,
+  name                varchar(255)   NOT NULL,
+  name_en             varchar(255),
+  branch_id           uuid           NOT NULL REFERENCES branches(id),
+  address             text,
+  keeper_employee_id  uuid           REFERENCES employees(id),
+  warehouse_type      warehouse_type NOT NULL DEFAULT 'NORMAL',
+  is_active           boolean        NOT NULL DEFAULT true,
+  version             integer        NOT NULL DEFAULT 1,
+  created_at          timestamptz    NOT NULL DEFAULT now(),
+  created_by          uuid           REFERENCES users(id),
+  updated_at          timestamptz    NOT NULL DEFAULT now(),
+  updated_by          uuid           REFERENCES users(id)
+);
+
+-- ===== Bảng giá bán / Sales price lists (FR-MDM-025) =====
+CREATE TABLE price_lists (
+  id                  uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+  code                varchar(30)  NOT NULL UNIQUE,
+  name                varchar(255) NOT NULL,
+  name_en             varchar(255),
+  currency_code       char(3)      NOT NULL DEFAULT 'VND' REFERENCES currencies(code),
+  prices_include_tax  boolean      NOT NULL DEFAULT false,  -- FR-SAL-009
+  is_default          boolean      NOT NULL DEFAULT false,  -- bảng giá chung / general list (FR-SAL-007)
+  is_active           boolean      NOT NULL DEFAULT true,
+  version             integer      NOT NULL DEFAULT 1,
+  created_at          timestamptz  NOT NULL DEFAULT now(),
+  created_by          uuid         REFERENCES users(id),
+  updated_at          timestamptz  NOT NULL DEFAULT now(),
+  updated_by          uuid         REFERENCES users(id)
+);
+CREATE UNIQUE INDEX price_lists_one_default ON price_lists (currency_code) WHERE is_default;
+
+CREATE TABLE price_list_items (
+  id             uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+  price_list_id  uuid         NOT NULL REFERENCES price_lists(id),
+  product_id     uuid         NOT NULL REFERENCES products(id),
+  uom_id         uuid         NOT NULL REFERENCES uoms(id),
+  price          dm_price     NOT NULL CHECK (price >= 0),
+  valid_from     date         NOT NULL,
+  valid_to       date,                     -- NULL = không thời hạn / open-ended
+  created_at     timestamptz  NOT NULL DEFAULT now(),
+  created_by     uuid         REFERENCES users(id),
+  updated_at     timestamptz  NOT NULL DEFAULT now(),
+  updated_by     uuid         REFERENCES users(id),
+  CHECK (valid_to IS NULL OR valid_to >= valid_from),
+  CONSTRAINT price_list_items_no_overlap
+    EXCLUDE USING gist (price_list_id WITH =, product_id WITH =, uom_id WITH =,
+                        daterange(valid_from, valid_to, '[]') WITH &&)
+);
+
+-- ===== Đối tác / Business partners (FR-MDM-009 – 014) =====
+CREATE TYPE partner_group_type AS ENUM ('CUSTOMER','SUPPLIER','BOTH');
+
+CREATE TABLE partner_groups (
+  id             uuid               PRIMARY KEY DEFAULT gen_random_uuid(),
+  code           varchar(30)        NOT NULL UNIQUE,
+  name           varchar(255)       NOT NULL,
+  name_en        varchar(255),
+  group_type     partner_group_type NOT NULL DEFAULT 'CUSTOMER',
+  price_list_id  uuid               REFERENCES price_lists(id),  -- bảng giá của nhóm / group price list
+  is_active      boolean            NOT NULL DEFAULT true,
+  version        integer            NOT NULL DEFAULT 1,
+  created_at     timestamptz        NOT NULL DEFAULT now(),
+  created_by     uuid               REFERENCES users(id),
+  updated_at     timestamptz        NOT NULL DEFAULT now(),
+  updated_by     uuid               REFERENCES users(id)
+);
+
+CREATE TYPE partner_kind AS ENUM ('ORGANIZATION','INDIVIDUAL');
+
+CREATE TABLE partners (
+  id                        uuid          PRIMARY KEY DEFAULT gen_random_uuid(),
+  code                      varchar(50)   NOT NULL UNIQUE,
+  name                      varchar(255)  NOT NULL,
+  name_en                   varchar(255),
+  short_name                varchar(100),
+  partner_kind              partner_kind  NOT NULL DEFAULT 'ORGANIZATION',
+  is_customer               boolean       NOT NULL DEFAULT false,
+  is_supplier               boolean       NOT NULL DEFAULT false,
+  tax_code                  dm_tax_code,
+  billing_address           text,
+  phone                     varchar(30),
+  email                     varchar(255),
+  einvoice_email            varchar(255),
+  currency_code             char(3)       NOT NULL DEFAULT 'VND' REFERENCES currencies(code),
+  -- Khách hàng / Customer (FR-MDM-010)
+  customer_group_id         uuid          REFERENCES partner_groups(id),
+  salesperson_id            uuid          REFERENCES employees(id),
+  price_list_id             uuid          REFERENCES price_lists(id),
+  customer_payment_term_id  uuid          REFERENCES payment_terms(id),
+  credit_limit              dm_amount     CHECK (credit_limit >= 0),  -- NULL = không giới hạn / unlimited
+  max_overdue_days          smallint      CHECK (max_overdue_days >= 0),
+  receivable_account_code   varchar(20),  -- 131 (FK ở / FK in P9)
+  -- Nhà cung cấp / Supplier (FR-MDM-011)
+  supplier_group_id         uuid          REFERENCES partner_groups(id),
+  supplier_payment_term_id  uuid          REFERENCES payment_terms(id),
+  lead_time_days            smallint      CHECK (lead_time_days >= 0),
+  incoterm                  varchar(3),   -- FOB, CIF…
+  payable_account_code      varchar(20),  -- 331 (FK ở / FK in P9)
+  is_active                 boolean       NOT NULL DEFAULT true,
+  version                   integer       NOT NULL DEFAULT 1,
+  created_at                timestamptz   NOT NULL DEFAULT now(),
+  created_by                uuid          REFERENCES users(id),
+  updated_at                timestamptz   NOT NULL DEFAULT now(),
+  updated_by                uuid          REFERENCES users(id),
+  CHECK (is_customer OR is_supplier)
+);
+CREATE INDEX ON partners (tax_code);
+CREATE INDEX partners_search_idx ON partners
+  USING gin (lower(f_unaccent(code || ' ' || name)) gin_trgm_ops);
+
+CREATE TABLE partner_addresses (
+  id          uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+  partner_id  uuid         NOT NULL REFERENCES partners(id),
+  label       varchar(100),
+  address     text         NOT NULL,
+  receiver    varchar(150),
+  phone       varchar(30),
+  is_default  boolean      NOT NULL DEFAULT false,
+  is_active   boolean      NOT NULL DEFAULT true,
+  created_at  timestamptz  NOT NULL DEFAULT now(),
+  created_by  uuid         REFERENCES users(id),
+  updated_at  timestamptz  NOT NULL DEFAULT now(),
+  updated_by  uuid         REFERENCES users(id)
+);
+CREATE UNIQUE INDEX partner_addresses_one_default ON partner_addresses (partner_id) WHERE is_default;
+
+CREATE TABLE partner_contacts (
+  id          uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+  partner_id  uuid         NOT NULL REFERENCES partners(id),
+  full_name   varchar(150) NOT NULL,
+  job_title   varchar(100),
+  phone       varchar(30),
+  email       varchar(255),
+  is_primary  boolean      NOT NULL DEFAULT false,
+  is_active   boolean      NOT NULL DEFAULT true,
+  created_at  timestamptz  NOT NULL DEFAULT now(),
+  created_by  uuid         REFERENCES users(id),
+  updated_at  timestamptz  NOT NULL DEFAULT now(),
+  updated_by  uuid         REFERENCES users(id)
+);
+CREATE INDEX ON partner_contacts (partner_id);
+
+CREATE TABLE partner_bank_accounts (
+  id             uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+  partner_id     uuid         NOT NULL REFERENCES partners(id),
+  account_no     varchar(30)  NOT NULL,
+  account_name   varchar(255) NOT NULL,
+  bank_name      varchar(150) NOT NULL,
+  bank_branch    varchar(150),
+  currency_code  char(3)      NOT NULL DEFAULT 'VND' REFERENCES currencies(code),
+  is_default     boolean      NOT NULL DEFAULT false,
+  is_active      boolean      NOT NULL DEFAULT true,
+  created_at     timestamptz  NOT NULL DEFAULT now(),
+  created_by     uuid         REFERENCES users(id),
+  updated_at     timestamptz  NOT NULL DEFAULT now(),
+  updated_by     uuid         REFERENCES users(id),
+  UNIQUE (partner_id, bank_name, account_no)
+);
+
+-- ===== Dữ liệu khởi tạo / Seed =====
+INSERT INTO taxes (code, name, name_en, category, rate, valid_from) VALUES
+  ('VAT10', 'Thuế GTGT 10%',            'VAT 10%',        'RATED',        10, '2026-01-01'),
+  ('VAT8',  'Thuế GTGT 8%',             'VAT 8%',         'RATED',         8, '2026-01-01'),
+  ('VAT5',  'Thuế GTGT 5%',             'VAT 5%',         'RATED',         5, '2026-01-01'),
+  ('VAT0',  'Thuế GTGT 0%',             'VAT 0%',         'RATED',         0, '2026-01-01'),
+  ('KCT',   'Không chịu thuế GTGT',     'Not subject to VAT', 'NOT_SUBJECT',  NULL, '2026-01-01'),
+  ('KKKNT', 'Không kê khai, tính nộp',  'Not declared',   'NOT_DECLARED', NULL, '2026-01-01');
+
+INSERT INTO payment_methods (code, name, name_en, method_type) VALUES
+  ('CASH', 'Tiền mặt',      'Cash',          'CASH'),
+  ('BANK', 'Chuyển khoản',  'Bank transfer', 'BANK_TRANSFER'),
+  ('CARD', 'Thẻ',           'Card',          'CARD'),
+  ('NET',  'Bù trừ công nợ', 'Netting',      'NETTING');
+
+INSERT INTO payment_terms (code, name, name_en, term_type, days) VALUES
+  ('IMM',   'Thanh toán ngay', 'Immediate',  'IMMEDIATE', 0),
+  ('NET30', 'Sau 30 ngày',     'Net 30',     'NET_DAYS',  30);
+```
+
+</details>
+
+## 5. Câu hỏi mở / Open questions
 
 | # | Câu hỏi (VI) | Question (EN) |
 |---|---|---|

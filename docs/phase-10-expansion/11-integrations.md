@@ -53,3 +53,92 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P2](../
 
 - **VI:** Cung cấp REST API có phiên bản (`/api/v1`), tài liệu OpenAPI; xác thực bằng OAuth2 client credentials hoặc API key; phân quyền theo phạm vi (scope); giới hạn tần suất gọi.
 - **EN:** Provide a versioned REST API (`/api/v1`) with OpenAPI docs; authenticate via OAuth2 client credentials or API keys; scope-based authorization; rate limiting.
+
+## 3. Mô hình dữ liệu / Data model
+
+- **VI:** Mã VietQR được sinh khi in từ mã BIN ngân hàng của tài khoản nhận và nội dung chứa số chứng từ; không lưu ảnh QR (`FR-INT-005`). Kết quả tra cứu mã số thuế được lưu đệm và cập nhật `partners.tax_status`, dùng cho cảnh báo `BR-PUR-006` (`FR-INT-009`). Máy chấm công ánh xạ mã chấm công trên thiết bị với nhân viên (`FR-INT-010`). Ứng dụng gọi REST API công khai được cấp `api_clients` với phạm vi (scope) và giới hạn tần suất; bí mật chỉ lưu dạng băm (`FR-INT-014`).
+- **EN:** VietQR codes are generated at print time from the receiving account's bank BIN and a description containing the document number; QR images are not stored (`FR-INT-005`). Tax ID lookup results are cached and update `partners.tax_status`, which drives the `BR-PUR-006` warning (`FR-INT-009`). Time clocks map device user codes to employees (`FR-INT-010`). Applications calling the public REST API get `api_clients` with scopes and rate limits; secrets are stored hashed only (`FR-INT-014`).
+
+| Bảng / Table | Mục đích (VI) | Purpose (EN) |
+|---|---|---|
+| `company_bank_accounts.bank_bin`, `vietqr_enabled` | Thông tin sinh mã VietQR. | VietQR generation data. |
+| `tax_lookup_cache`, `partners.tax_status` | Kết quả tra cứu và trạng thái mã số thuế đối tác. | Lookup results and partner tax status. |
+| `attendance_devices`, `attendance_device_users` | Máy chấm công và ánh xạ mã chấm công ↔ nhân viên. | Time clocks and device user code ↔ employee mapping. |
+| `api_clients` | Ứng dụng tích hợp: OAuth2 client credentials hoặc API key, scope, giới hạn tần suất. | Integration clients: OAuth2 client credentials or API key, scopes, rate limits. |
+
+<details>
+<summary>Xem DDL / Show DDL</summary>
+
+```sql
+-- Chạy sau / Run after: 08-hr-payroll.md (P10)
+
+-- FR-INT-005
+ALTER TABLE company_bank_accounts
+  ADD COLUMN bank_bin        varchar(8),               -- mã BIN NAPAS / NAPAS bank BIN
+  ADD COLUMN vietqr_enabled  boolean NOT NULL DEFAULT false,
+  ADD CONSTRAINT company_bank_accounts_vietqr_check CHECK (NOT vietqr_enabled OR bank_bin IS NOT NULL);
+
+-- FR-INT-009, BR-PUR-006
+CREATE TYPE tax_status AS ENUM ('ACTIVE','SUSPENDED','CLOSED','RISK','NOT_FOUND','UNKNOWN');
+
+CREATE TABLE tax_lookup_cache (
+  tax_code    dm_tax_code  PRIMARY KEY,
+  name        varchar(255),
+  address     text,
+  status      tax_status   NOT NULL,
+  raw         jsonb,
+  fetched_at  timestamptz  NOT NULL DEFAULT now()
+);
+
+ALTER TABLE partners
+  ADD COLUMN tax_status             tax_status NOT NULL DEFAULT 'UNKNOWN',
+  ADD COLUMN tax_status_checked_at  timestamptz;
+
+-- FR-INT-010
+CREATE TABLE attendance_devices (
+  id              uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+  code            varchar(30)  NOT NULL UNIQUE,
+  name            varchar(150) NOT NULL,
+  vendor          varchar(50),
+  serial_no       varchar(100),
+  ip_address      inet,
+  branch_id       uuid         REFERENCES branches(id),
+  credential_id   uuid         REFERENCES integration_credentials(id),
+  last_synced_at  timestamptz,
+  is_active       boolean      NOT NULL DEFAULT true,
+  created_at      timestamptz  NOT NULL DEFAULT now(),
+  created_by      uuid         REFERENCES users(id)
+);
+
+CREATE TABLE attendance_device_users (
+  device_id         uuid        NOT NULL REFERENCES attendance_devices(id),
+  device_user_code  varchar(30) NOT NULL,
+  employee_id       uuid        NOT NULL REFERENCES employees(id),
+  PRIMARY KEY (device_id, device_user_code)
+);
+
+ALTER TABLE attendance_records
+  ADD CONSTRAINT attendance_records_device_fk FOREIGN KEY (device_id) REFERENCES attendance_devices(id);
+
+-- FR-INT-014
+CREATE TYPE api_auth_type AS ENUM ('OAUTH_CLIENT','API_KEY');
+
+CREATE TABLE api_clients (
+  id                     uuid          PRIMARY KEY DEFAULT gen_random_uuid(),
+  name                   varchar(150)  NOT NULL,
+  auth_type              api_auth_type NOT NULL,
+  client_id              varchar(64)   NOT NULL UNIQUE,  -- hoặc tiền tố API key / or API key prefix
+  secret_hash            text          NOT NULL,
+  scopes                 text[]        NOT NULL DEFAULT '{}',  -- vd / e.g. {sales.read, sales.write}
+  rate_limit_per_minute  integer       NOT NULL DEFAULT 60 CHECK (rate_limit_per_minute > 0),
+  owner_user_id          uuid          REFERENCES users(id),
+  expires_at             timestamptz,
+  last_used_at           timestamptz,
+  is_active              boolean       NOT NULL DEFAULT true,
+  created_at             timestamptz   NOT NULL DEFAULT now(),
+  created_by             uuid          REFERENCES users(id),
+  revoked_at             timestamptz
+);
+```
+
+</details>

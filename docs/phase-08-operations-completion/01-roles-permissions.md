@@ -34,3 +34,37 @@ Ký hiệu / Legend: `V` Xem / View · `C` Tạo / Create · `E` Sửa / Edit ·
 
 - **VI:** `HR`, `HRM` bắt đầu có quyền từ giai đoạn này (tạo đề nghị mua hàng); quyền trên hồ sơ nhân sự và bảng lương có từ P10. Vai trò `EMP` tạo đề nghị mua hàng (P8) / tạm ứng (P9) và chỉ truy cập cổng tự phục vụ (P11).
 - **EN:** `HR` and `HRM` receive their first permissions in this phase (creating purchase requests); rights on employee records and payroll arrive in P10. The `EMP` role creates purchase requests (P8) / advance requests (P9) and only accesses the self-service portal (P11).
+
+## 4. Mô hình dữ liệu / Data model
+
+- **VI:** Không đổi lược đồ; nạp vai trò mục 3 (kèm phạm vi mặc định), chức năng và ma trận mục 1. Vai trò `EMP` chưa có cột trong ma trận nhưng mục 3 ghi `EMP` tạo đề nghị mua hàng từ P8, nên seed cấp `VC` với phạm vi `OWN`. Bổ sung chức năng `INV.LOT_OVERRIDE` cho quyền chọn lô khác FEFO (`BR-INV-005`), không cấp mặc định.
+- **EN:** No schema change; the section 3 roles (with default scopes), the functions and the section 1 matrix are seeded. The `EMP` role has no matrix column, but section 3 says `EMP` creates purchase requests from P8, so the seed grants `VC` with `OWN` scope. A `INV.LOT_OVERRIDE` function is added for choosing a non-FEFO lot (`BR-INV-005`), with no default grant.
+
+<details>
+<summary>Xem DDL / Show DDL</summary>
+
+```sql
+-- Chạy sau / Run after: P7
+
+INSERT INTO roles (code, name_vi, name_en, is_system, default_data_scope) VALUES
+  ('HR',  'Nhân viên nhân sự',      'HR staff',                true, 'ALL'),
+  ('HRM', 'Trưởng phòng nhân sự',   'HR manager',              true, 'ALL'),
+  ('EMP', 'Nhân viên (tự phục vụ)', 'Employee (self-service)', true, 'OWN')
+ON CONFLICT (code) DO NOTHING;
+
+INSERT INTO app_functions (code, module, name_vi, name_en, supported_actions, sort_order) VALUES
+  ('PUR.PURCHASE_REQUEST', 'PUR', 'Đề nghị mua hàng',      'Purchase requests',      '{VIEW,CREATE,EDIT,DELETE,APPROVE}', 405),
+  ('INV.LOT_OVERRIDE',     'INV', 'Chọn lô khác gợi ý FEFO', 'Override FEFO lot choice', '{EDIT}',                          316)
+ON CONFLICT (code) DO NOTHING;
+
+INSERT INTO role_permissions (role_id, function_code, action)
+SELECT r.id, 'PUR.PURCHASE_REQUEST', a
+FROM (VALUES ('CEO','VA'), ('SAL','VC'), ('SLM','VC'), ('PUR','VCE'), ('PUM','VCEA'), ('WH','VC'), ('WHM','VC'),
+             ('ACC','VC'), ('CAC','VC'), ('HR','VC'), ('HRM','VC'), ('EMP','VC'), ('AUD','V'))
+       AS m(role_code, letters)
+JOIN roles r ON r.code = m.role_code
+CROSS JOIN LATERAL perm_letters(m.letters) AS a
+ON CONFLICT DO NOTHING;
+```
+
+</details>

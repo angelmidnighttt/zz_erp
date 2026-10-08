@@ -74,3 +74,133 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P4](../
 | Mã / ID | Quy tắc (VI) | Rule (EN) | Giai đoạn / Phase |
 |---|---|---|---|
 | BR-PUR-003 | Dung sai mặc định: số lượng 0%, đơn giá ±2% (cấu hình được). | Default tolerances: quantity 0%, unit price ±2% (configurable). | P8 |
+
+## 3. Mô hình dữ liệu / Data model
+
+- **VI:** Đề nghị mua có luồng duyệt theo phòng ban và giá trị ước tính; người duyệt sửa được `approved_qty` (`FR-PUR-003`). Gộp nhiều dòng đề nghị vào một đơn mua được lưu ở bảng nối `purchase_request_line_links` để truy vết hai chiều (`FR-PUR-004`); P10 dùng lại bảng này cho yêu cầu báo giá. Đề nghị tự động (`FR-PUR-002`) là đề nghị có `is_auto = true` sinh từ `v_replenishment_needs`. Ứng trước nhà cung cấp là chứng từ chi (`cash_documents`) gắn `purchase_order_id` (`FR-PUR-013`). Lô / serial / hạn dùng khi nhận hàng được ghi trên dòng phiếu nhập ([06 · Kho](06-inventory.md)).
+- **EN:** Purchase requests follow approval flows by department and estimated value; approvers may change `approved_qty` (`FR-PUR-003`). Consolidating several request lines into one PO is stored in the `purchase_request_line_links` join table for two-way traceability (`FR-PUR-004`); P10 reuses it for RFQs. Automatic requests (`FR-PUR-002`) are requests with `is_auto = true` generated from `v_replenishment_needs`. Supplier prepayments are payment documents (`cash_documents`) carrying `purchase_order_id` (`FR-PUR-013`). Lot / serial / expiry on receipt is recorded on receipt lines ([06 · Inventory](06-inventory.md)).
+
+```mermaid
+erDiagram
+    departments ||--o{ purchase_requests : "requests"
+    purchase_requests ||--o{ purchase_request_lines : "contains"
+    purchase_request_lines ||--o{ purchase_request_line_links : "fulfilled by"
+    purchase_order_lines |o--o{ purchase_request_line_links : "fulfils"
+    purchase_orders |o--o{ cash_documents : "prepaid by"
+```
+
+| Bảng / Table | Mục đích (VI) | Purpose (EN) |
+|---|---|---|
+| `purchase_requests`, `purchase_request_lines` | Đề nghị mua, có thể mô tả tự do cho hàng chưa có mã (`FR-PUR-001`). | Purchase requests, with free-text items allowed for uncoded goods (`FR-PUR-001`). |
+| `purchase_request_line_links` | Liên kết dòng đề nghị ↔ dòng đơn mua, số lượng đã đặt (`FR-PUR-004`, mở rộng `FR-PUR-007`). | Request line ↔ PO line links with ordered quantity (`FR-PUR-004`, `FR-PUR-007` extension). |
+| `cash_documents.purchase_order_id` | Ứng trước theo đơn mua, cấn trừ khi thanh toán hóa đơn (`FR-PUR-013`). | Prepayment against a PO, offset when paying the bill (`FR-PUR-013`). |
+| `product_categories.receipt_qty_tolerance_pct`, `price_tolerance_pct` | Dung sai nhận hàng theo nhóm; trống thì theo tham số chung (`FR-PUR-015`, `BR-PUR-003`). | Receiving tolerances per category; empty falls back to the global parameters (`FR-PUR-015`, `BR-PUR-003`). |
+| `rpt_supplier_delivery_performance` | Tỷ lệ giao đúng hạn và đủ số lượng theo nhà cung cấp (mở rộng `FR-PUR-026`). | On-time and in-full delivery rate per supplier (`FR-PUR-026` extension). |
+
+<details>
+<summary>Xem DDL / Show DDL</summary>
+
+```sql
+-- Chạy sau / Run after: 06-inventory.md (P8)
+
+INSERT INTO document_types (code, module, name_vi, name_en, function_code, table_name, sort_order, approval_mode) VALUES
+  ('PR', 'PUR', 'Đề nghị mua hàng', 'Purchase request', 'PUR.PURCHASE_REQUEST', 'purchase_requests', 405, 'FLOW');
+INSERT INTO document_sequences (document_type, prefix) VALUES ('PR', 'PR');
+
+-- Nhận vượt dung sai cần duyệt: luồng của phiếu nhập với trigger_reason = 'OVER_TOLERANCE'
+-- Over-tolerance receipts need approval: a goods-receipt flow with trigger_reason = 'OVER_TOLERANCE'
+UPDATE document_types SET approval_mode = 'FLOW' WHERE code = 'GR';
+
+INSERT INTO system_settings (key, value) VALUES
+  ('purchasing.qty_tolerance_pct',   '0'),   -- BR-PUR-003
+  ('purchasing.price_tolerance_pct', '2'),
+  ('purchasing.price_increase_warning_pct', '10')  -- FR-PUR-008: cảnh báo giá cao hơn lần trước X%
+ON CONFLICT (key) DO NOTHING;
+
+ALTER TABLE product_categories
+  ADD COLUMN receipt_qty_tolerance_pct  dm_pct,  -- NULL = purchasing.qty_tolerance_pct
+  ADD COLUMN price_tolerance_pct        dm_pct;  -- NULL = purchasing.price_tolerance_pct
+
+CREATE TYPE purchase_request_status AS ENUM
+  ('DRAFT','PENDING_APPROVAL','APPROVED','IN_PROGRESS','DONE','REJECTED','CANCELLED');
+
+CREATE TABLE purchase_requests (
+  id                     uuid                    PRIMARY KEY DEFAULT gen_random_uuid(),
+  doc_no                 varchar(30)             UNIQUE,
+  branch_id              uuid                    NOT NULL REFERENCES branches(id),
+  department_id          uuid                    NOT NULL REFERENCES departments(id),
+  requester_employee_id  uuid                    REFERENCES employees(id),
+  owner_id               uuid                    REFERENCES users(id),
+  request_date           date                    NOT NULL,
+  required_date          date,
+  purpose                text,
+  expense_category_id    uuid                    REFERENCES expense_categories(id),
+  is_auto                boolean                 NOT NULL DEFAULT false,  -- FR-PUR-002
+  estimated_total_vnd    dm_amount               NOT NULL DEFAULT 0,
+  status                 purchase_request_status NOT NULL DEFAULT 'DRAFT',
+  deleted_at             timestamptz,
+  deleted_by             uuid                    REFERENCES users(id),
+  version                integer                 NOT NULL DEFAULT 1,
+  created_at             timestamptz             NOT NULL DEFAULT now(),
+  created_by             uuid                    REFERENCES users(id),
+  updated_at             timestamptz             NOT NULL DEFAULT now(),
+  updated_by             uuid                    REFERENCES users(id)
+);
+CREATE INDEX ON purchase_requests (status) WHERE status IN ('APPROVED','IN_PROGRESS');
+
+CREATE TABLE purchase_request_lines (
+  id                     uuid      PRIMARY KEY DEFAULT gen_random_uuid(),
+  request_id             uuid      NOT NULL REFERENCES purchase_requests(id),
+  line_no                smallint  NOT NULL,
+  product_id             uuid      REFERENCES products(id),  -- NULL = hàng chưa có mã / uncoded item
+  description            varchar(500),
+  uom_id                 uuid      REFERENCES uoms(id),
+  qty                    dm_qty    NOT NULL CHECK (qty > 0),
+  approved_qty           dm_qty    CHECK (approved_qty >= 0),  -- người duyệt điều chỉnh / adjusted by approver
+  estimated_unit_price   dm_price,
+  suggested_supplier_id  uuid      REFERENCES partners(id),
+  required_date          date,
+  qty_ordered            dm_qty    NOT NULL DEFAULT 0,
+  UNIQUE (request_id, line_no),
+  CHECK (product_id IS NOT NULL OR description IS NOT NULL)
+);
+
+CREATE TABLE purchase_request_line_links (
+  id               uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  request_line_id  uuid        NOT NULL REFERENCES purchase_request_lines(id),
+  po_line_id       uuid        REFERENCES purchase_order_lines(id),
+  qty              dm_qty      NOT NULL CHECK (qty > 0),
+  created_at       timestamptz NOT NULL DEFAULT now(),
+  created_by       uuid        REFERENCES users(id)
+);
+CREATE INDEX ON purchase_request_line_links (request_line_id);
+CREATE INDEX ON purchase_request_line_links (po_line_id);
+
+-- FR-PUR-013: ứng trước theo đơn mua / prepayment against a PO
+ALTER TABLE cash_documents ADD COLUMN purchase_order_id uuid REFERENCES purchase_orders(id);
+
+-- FR-PUR-026 (mở rộng / extension): giao đúng hạn = phiếu nhập đầu tiên không trễ ngày dự kiến
+CREATE VIEW rpt_supplier_delivery_performance AS
+WITH line_receipts AS (
+  SELECT l.id AS po_line_id, po.supplier_id,
+         coalesce(l.expected_date, po.expected_date) AS expected_date,
+         l.qty, l.qty_received,
+         min(d.doc_date) AS first_receipt_date
+  FROM purchase_orders po
+  JOIN purchase_order_lines l      ON l.po_id = po.id
+  LEFT JOIN stock_document_lines sl ON sl.source_line_id = l.id
+  LEFT JOIN stock_documents d       ON d.id = sl.document_id AND d.status = 'DONE' AND d.reason = 'PURCHASE'
+  WHERE po.status NOT IN ('DRAFT','CANCELLED')
+  GROUP BY l.id, po.supplier_id, coalesce(l.expected_date, po.expected_date), l.qty, l.qty_received
+)
+SELECT supplier_id,
+       count(*)                                                        AS po_lines,
+       count(*) FILTER (WHERE first_receipt_date <= expected_date)     AS on_time_lines,
+       count(*) FILTER (WHERE qty_received >= qty)                     AS in_full_lines,
+       round(100.0 * count(*) FILTER (WHERE first_receipt_date <= expected_date)
+             / NULLIF(count(*) FILTER (WHERE expected_date IS NOT NULL), 0), 2) AS on_time_pct
+FROM line_receipts
+GROUP BY supplier_id;
+```
+
+</details>

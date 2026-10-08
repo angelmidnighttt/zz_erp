@@ -25,3 +25,22 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P3](../
 | Mã / ID | Quy tắc (VI) | Rule (EN) | Giai đoạn / Phase |
 |---|---|---|---|
 | BR-INV-006 | Điều chỉnh tồn kho sau kiểm kê phải được quản lý kho và kế toán trưởng duyệt (theo ngưỡng giá trị). | Count adjustments require warehouse manager and chief accountant approval (by value threshold). | P7 |
+
+## 3. Mô hình dữ liệu / Data model
+
+- **VI:** Kho được gán lấy từ `user_access_grants` (`object_type = 'WAREHOUSE'`) qua `user_access_ids` ([01 · Vai trò & phân quyền](01-roles-permissions.md)); service lọc `stock_documents.warehouse_id` / `dest_warehouse_id` theo danh sách này khi phạm vi là `ASSIGNED`. Kiểm kê chuyển sang luồng duyệt; tổng giá trị chênh lệch được tính lúc gửi duyệt và dùng làm số tiền chọn luồng (`BR-INV-006`).
+- **EN:** Assigned warehouses come from `user_access_grants` (`object_type = 'WAREHOUSE'`) via `user_access_ids` ([01 · Roles & permissions](01-roles-permissions.md)); the service filters `stock_documents.warehouse_id` / `dest_warehouse_id` against that list when the scope is `ASSIGNED`. Stock counts move to approval flows; the total variance value is computed on submission and used as the amount for flow selection (`BR-INV-006`).
+
+<details>
+<summary>Xem DDL / Show DDL</summary>
+
+```sql
+-- Chạy sau / Run after: 02-system-administration.md (P7)
+
+UPDATE document_types SET approval_mode = 'FLOW' WHERE code = 'SC';
+
+-- BR-INV-006: Σ |chênh lệch| × giá vốn, VND / Σ |variance| × cost, VND
+ALTER TABLE stock_counts ADD COLUMN diff_value_vnd dm_amount;
+```
+
+</details>

@@ -35,3 +35,106 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../
 | Mã / ID | Quy tắc (VI) | Rule (EN) | Giai đoạn / Phase |
 |---|---|---|---|
 | BR-SYS-001 | Số chứng từ là duy nhất trong toàn hệ thống. | Document numbers are unique system-wide. | P3 |
+
+## 3. Mô hình dữ liệu / Data model
+
+- **VI:** `document_types` là danh mục loại chứng từ khai báo trong mã nguồn; mỗi phân hệ nạp loại chứng từ của mình khi được triển khai. Số chính thức được cấp trong cùng giao dịch xác nhận chứng từ bằng `UPDATE document_sequence_counters … RETURNING last_value` (khóa dòng nên không trùng), sau đó ghi vào `issued_document_numbers` để bảo đảm `BR-SYS-001` trên mọi bảng chứng từ.
+- **EN:** `document_types` is a code-defined catalog of document types; each module seeds its own types when delivered. The official number is assigned in the confirmation transaction with `UPDATE document_sequence_counters … RETURNING last_value` (row-locked, so no duplicates), then recorded in `issued_document_numbers` to guarantee `BR-SYS-001` across all document tables.
+
+```mermaid
+erDiagram
+    app_functions |o--o{ document_types : "governs"
+    document_types ||--o{ document_sequences : "numbered by"
+    branches |o--o{ document_sequences : "per branch"
+    document_sequences ||--o{ document_sequence_counters : "counts"
+    document_types ||--o{ issued_document_numbers : "issued"
+    document_types ||--o{ print_templates : "printed with"
+```
+
+| Bảng / Table | Mục đích (VI) | Purpose (EN) |
+|---|---|---|
+| `document_types` | Loại chứng từ, chức năng phân quyền tương ứng và bảng lưu. | Document types, their governing function and storage table. |
+| `document_sequences` | Mẫu số theo loại chứng từ và chi nhánh (`branch_id` trống = mẫu chung); chu kỳ đặt lại bộ đếm (`FR-SYS-019`). | Numbering pattern per document type and branch (empty `branch_id` = shared pattern); counter reset cycle (`FR-SYS-019`). |
+| `document_sequence_counters` | Bộ đếm theo chu kỳ (`period_key` = `''`, `'2026'` hoặc `'202610'`). | Counter per cycle (`period_key` = `''`, `'2026'` or `'202610'`). |
+| `issued_document_numbers` | Sổ đăng ký mọi số đã cấp, khóa chính là số chứng từ (`BR-SYS-001`). | Registry of every issued number, keyed by the number itself (`BR-SYS-001`). |
+| `print_templates` | Mẫu in theo loại chứng từ, ngôn ngữ và chế độ kế toán; mỗi tổ hợp có một mẫu mặc định (`FR-SYS-021`). | Print templates per document type, language and accounting regime; one default per combination (`FR-SYS-021`). |
+
+<details>
+<summary>Xem DDL / Show DDL</summary>
+
+```sql
+-- Chạy sau / Run after: 01-roles-permissions.md (P3)
+
+-- Seed từ mã nguồn / seeded from code
+CREATE TABLE document_types (
+  code           varchar(10)  PRIMARY KEY,   -- vd / e.g. 'GR', 'GI', 'SO'
+  module         varchar(10)  NOT NULL,
+  name_vi        varchar(150) NOT NULL,
+  name_en        varchar(150) NOT NULL,
+  function_code  varchar(50)  REFERENCES app_functions(code),
+  table_name     varchar(63)  NOT NULL,
+  sort_order     integer      NOT NULL DEFAULT 0
+);
+
+CREATE TYPE sequence_reset AS ENUM ('NEVER','YEARLY','MONTHLY');
+
+-- Biến của pattern / pattern tokens: {PREFIX} {BRANCH} {YYYY} {YY} {MM} {SEQ}
+CREATE TABLE document_sequences (
+  id             uuid           PRIMARY KEY DEFAULT gen_random_uuid(),
+  document_type  varchar(10)    NOT NULL REFERENCES document_types(code),
+  branch_id      uuid           REFERENCES branches(id),  -- NULL = mọi chi nhánh / all branches
+  prefix         varchar(10)    NOT NULL,
+  pattern        varchar(100)   NOT NULL DEFAULT '{PREFIX}-{BRANCH}-{YY}{MM}-{SEQ}',
+  seq_padding    smallint       NOT NULL DEFAULT 5 CHECK (seq_padding BETWEEN 1 AND 10),
+  reset_policy   sequence_reset NOT NULL DEFAULT 'MONTHLY',
+  is_active      boolean        NOT NULL DEFAULT true,
+  version        integer        NOT NULL DEFAULT 1,
+  created_at     timestamptz    NOT NULL DEFAULT now(),
+  created_by     uuid           REFERENCES users(id),
+  updated_at     timestamptz    NOT NULL DEFAULT now(),
+  updated_by     uuid           REFERENCES users(id),
+  UNIQUE NULLS NOT DISTINCT (document_type, branch_id)
+);
+
+CREATE TABLE document_sequence_counters (
+  sequence_id  uuid        NOT NULL REFERENCES document_sequences(id),
+  period_key   varchar(6)  NOT NULL,  -- '' | 'YYYY' | 'YYYYMM'
+  last_value   bigint      NOT NULL DEFAULT 0 CHECK (last_value >= 0),
+  PRIMARY KEY (sequence_id, period_key)
+);
+
+-- BR-SYS-001: số đã cấp là duy nhất và không bao giờ bị xóa / issued numbers are unique and never deleted
+CREATE TABLE issued_document_numbers (
+  doc_no         varchar(30) PRIMARY KEY,
+  document_type  varchar(10) NOT NULL REFERENCES document_types(code),
+  document_id    uuid        NOT NULL,
+  issued_at      timestamptz NOT NULL DEFAULT now(),
+  issued_by      uuid        REFERENCES users(id)
+);
+CREATE INDEX ON issued_document_numbers (document_type, document_id);
+
+CREATE TYPE print_language AS ENUM ('VI','EN');
+
+CREATE TABLE print_templates (
+  id                 uuid              PRIMARY KEY DEFAULT gen_random_uuid(),
+  document_type      varchar(10)       NOT NULL REFERENCES document_types(code),
+  language           print_language    NOT NULL DEFAULT 'VI',
+  accounting_regime  accounting_regime,          -- NULL = dùng chung / any regime
+  name               varchar(150)      NOT NULL,
+  engine             varchar(20)       NOT NULL DEFAULT 'HANDLEBARS',
+  body               text              NOT NULL, -- HTML + biến / HTML with placeholders
+  paper_size         varchar(10)       NOT NULL DEFAULT 'A4',
+  is_default         boolean           NOT NULL DEFAULT false,
+  is_active          boolean           NOT NULL DEFAULT true,
+  version            integer           NOT NULL DEFAULT 1,
+  created_at         timestamptz       NOT NULL DEFAULT now(),
+  created_by         uuid              REFERENCES users(id),
+  updated_at         timestamptz       NOT NULL DEFAULT now(),
+  updated_by         uuid              REFERENCES users(id)
+);
+CREATE UNIQUE INDEX print_templates_one_default
+  ON print_templates (document_type, language, accounting_regime) NULLS NOT DISTINCT
+  WHERE is_default;
+```
+
+</details>
