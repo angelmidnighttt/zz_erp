@@ -10,6 +10,12 @@ class AuthController {
         return res.status(200).json(success(user));
       });
   }
+
+  async createUser(req, res) {
+    return await authService
+      .createUser(req.validated.body)
+      .then((user) => res.status(200).json(success(user)));
+  }
 }
 
 export default new AuthController();

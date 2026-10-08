@@ -7,9 +7,9 @@ const loginUserDto = z.object({
 
 const createUserDto = z.object({
   email: z.email("Invalid email"),
-  password: z.string(),
+  username: z.string(),
   fullName: z.string(),
-  password: z.string().min(6)
+  password: z.string().min(6),
 });
 
 export { loginUserDto, createUserDto };

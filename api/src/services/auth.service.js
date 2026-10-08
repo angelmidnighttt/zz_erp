@@ -13,6 +13,7 @@ class AuthService {
     );
     if (!isValidPassword)
       throw new ApiError(401, "Invalid username or password");
+    await AuthRepo.updateLastLogin(existedUser.id);
     return {
       id: existedUser.id,
       email: existedUser.email,
@@ -21,6 +22,19 @@ class AuthService {
         refreshToken: createRefreshToken(existedUser),
       },
     };
+  }
+
+  async createUser({ email, username, fullName, password }) {
+    const existedUser = await AuthRepo.getUserByEmail(email);
+    if (existedUser) throw new ApiError(400, "User already exists");
+    const hashedPassword = await bcryptjs.hash(password, 10);
+    const user = await AuthRepo.createUser({
+      email,
+      username,
+      fullName,
+      password: hashedPassword,
+    });
+    return user;
   }
 }
 
