@@ -2,14 +2,14 @@ POST http://localhost:5000/api/v1/auth/login
 content-type: application/json
 
 {
-    "email":"thong1@localhost.com",
+    "email":"thong2@localhost.com",
     "password":"thong123"
 }
 
 #################
 POST http://localhost:5000/api/v1/auth/user
 content-type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImYyZjljMmM0LTRjN2EtMTFlYy1iZjdiLTAyNDJhYzEyMDAwMiIsImVtYWlsIjoiYWRtaW5AbG9jYWxob3N0LmNvbSIsImlhdCI6MTc5MTQyODQ5NywiZXhwIjoxNzkxNDI5Mzk3fQ.au6JxGzt0Ffxlps8K2nN41Jr10tDShqbFepU-yIE7j8
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImYyZjljMmM0LTRjN2EtMTFlYy1iZjdiLTAyNDJhYzEyMDAwMiIsImVtYWlsIjoiYWRtaW5AbG9jYWxob3N0LmNvbSIsImlhdCI6MTc5MTQzNDUzMSwiZXhwIjoxNzkxNDM1NDMxfQ.Oyseerwti3IgnCRj16JfQUIqa401TfpLWUNEGho4_dc
 
 {
     "email":"thong2@localhost.com",
@@ -18,3 +18,16 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImYyZjljMmM0L
     "password":"thong123"
 }
 
+#################
+GET http://localhost:5000/api/v1/auth/roles
+content-type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImYyZjljMmM0LTRjN2EtMTFlYy1iZjdiLTAyNDJhYzEyMDAwMiIsImVtYWlsIjoiYWRtaW5AbG9jYWxob3N0LmNvbSIsImlhdCI6MTc5MTQzNDUzMSwiZXhwIjoxNzkxNDM1NDMxfQ.Oyseerwti3IgnCRj16JfQUIqa401TfpLWUNEGho4_dc
+
+#################
+POST http://localhost:5000/api/v1/auth/users/3f101555-3082-4588-aa3a-6428d5ae7350/roles
+content-type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImYyZjljMmM0LTRjN2EtMTFlYy1iZjdiLTAyNDJhYzEyMDAwMiIsImVtYWlsIjoiYWRtaW5AbG9jYWxob3N0LmNvbSIsImlhdCI6MTc5MTQzNDUzMSwiZXhwIjoxNzkxNDM1NDMxfQ.Oyseerwti3IgnCRj16JfQUIqa401TfpLWUNEGho4_dc
+
+{
+   "rolesId":["ba06a758-ffac-4287-91e1-b2f2601dde84"]
+}

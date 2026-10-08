@@ -36,6 +36,14 @@ class AuthService {
     });
     return user;
   }
+
+  async getRoles() {
+    return await AuthRepo.getRoles();
+  }
+
+  async assignRoles(userId,rolesId ) {
+    return await AuthRepo.assignRoles(userId, rolesId);
+  }
 }
 
 export default new AuthService();

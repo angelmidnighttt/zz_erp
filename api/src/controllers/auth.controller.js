@@ -16,6 +16,18 @@ class AuthController {
       .createUser(req.validated.body)
       .then((user) => res.status(200).json(success(user)));
   }
+
+  async getRoles(req, res) {
+    return await authService
+      .getRoles()
+      .then((roles) => res.status(200).json(success(roles)));
+  }
+
+  async assignRoles(req, res) {
+    return await authService
+      .assignRoles(req.params.id, req.validated.body.rolesId)
+      .then((user) => res.status(200).json(success(user)));
+  }
 }
 
 export default new AuthController();
