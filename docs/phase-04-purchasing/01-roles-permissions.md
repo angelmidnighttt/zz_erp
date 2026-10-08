@@ -22,5 +22,5 @@ Ký hiệu / Legend: `V` Xem / View · `C` Tạo / Create · `E` Sửa / Edit ·
 
 ## 2. Ghi chú / Notes
 
-- **VI:** Ma trận là cấu hình mặc định khi khởi tạo; quản trị viên có thể thay đổi. Phạm vi dữ liệu lấy theo phạm vi mặc định của vai trò ([P2](../phase-02-organization-master-data/01-roles-permissions.md)). Ô có `A` chỉ có tác dụng từ khi có luồng duyệt (P7).
-- **EN:** The matrix is the initial default configuration; administrators can change it. Data scope follows the role's default scope ([P2](../phase-02-organization-master-data/01-roles-permissions.md)). Cells with `A` only take effect once approval flows exist (P7).
+- **VI:** Ma trận là cấu hình mặc định khi khởi tạo; quản trị viên có thể thay đổi. Ô có `A` chỉ có tác dụng từ khi có luồng duyệt (P7).
+- **EN:** The matrix is the initial default configuration; administrators can change it. Cells with `A` only take effect once approval flows exist (P7).

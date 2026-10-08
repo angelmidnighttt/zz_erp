@@ -41,5 +41,5 @@
 
 ## 6. Ghi chú / Notes
 
-- **VI:** Mốc nội bộ, nghiệm thu trên dữ liệu thử. Chưa làm ở P1 — chuyển sang P2: quên mật khẩu qua email, khóa tài khoản, lịch sử mật khẩu, đăng xuất mọi thiết bị, sao chép vai trò, phạm vi dữ liệu, nhật ký kiểm toán, chuyển ngôn ngữ VI / EN. Chuyển sang P7: hạn mức, quyền theo trường, phân tách nhiệm vụ, xác thực hai lớp, quản lý phiên, luồng duyệt.
-- **EN:** Internal milestone accepted on test data. Not in P1 — moved to P2: forgot password by email, lockout, password history, sign-out from all devices, role cloning, data scope, audit log, VI / EN language switching. Moved to P7: limits, field-level permissions, segregation of duties, MFA, session management, approval flows.
+- **VI:** Mốc nội bộ, nghiệm thu trên dữ liệu thử. Chưa làm ở P1 — chuyển sang P2: quên mật khẩu qua email, khóa tài khoản, lịch sử mật khẩu, đăng xuất mọi thiết bị, sao chép vai trò, nhật ký kiểm toán, chuyển ngôn ngữ VI / EN. Chuyển sang P7: phạm vi dữ liệu, hạn mức, quyền theo trường, phân tách nhiệm vụ, xác thực hai lớp, quản lý phiên, luồng duyệt.
+- **EN:** Internal milestone accepted on test data. Not in P1 — moved to P2: forgot password by email, lockout, password history, sign-out from all devices, role cloning, audit log, VI / EN language switching. Moved to P7: data scope, limits, field-level permissions, segregation of duties, MFA, session management, approval flows.

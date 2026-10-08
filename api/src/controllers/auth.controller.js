@@ -1,5 +1,5 @@
 import authService from "../services/auth.service.js";
-import { success, error } from "../utils/Response.js";
+import { success, error } from "../utils/response.js";
 class AuthController {
   async login(req, res) {
     console.log("req", req.validated);

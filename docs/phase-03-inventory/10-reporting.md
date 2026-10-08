@@ -33,8 +33,8 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P4](../
 #### FR-RPT-006 · Phân quyền báo cáo / Report permissions
 `Must` · `P3` (mở rộng / extended: `P7`)
 
-- **VI:** Quyền xem từng báo cáo theo vai trò; dữ liệu trong báo cáo tuân theo phạm vi dữ liệu (`FR-SYS-012`).
-- **EN:** Report access is granted per role; report data respects data scope (`FR-SYS-012`).
+- **VI:** Quyền xem từng báo cáo theo vai trò. Phạm vi dữ liệu trong báo cáo áp dụng từ P7.
+- **EN:** Report access is granted per role. Data scope on report data applies from P7.
 
 ## 3. Danh mục báo cáo chuẩn / Standard report catalog
 

@@ -8,8 +8,8 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../
 
 ## Phạm vi giai đoạn / Phase scope
 
-- **VI:** Quên mật khẩu, khóa tài khoản, lịch sử mật khẩu, đăng xuất mọi thiết bị; sao chép vai trò; phạm vi dữ liệu (của tôi / toàn công ty); nhật ký kiểm toán; VI / EN. Thông tin doanh nghiệp, chi nhánh, phòng ban; liên kết người dùng với nhân viên; tham số hệ thống; đính kèm, nhập / xuất Excel, tìm kiếm.
-- **EN:** Forgot password, lockout, password history, sign-out from all devices; role cloning; data scope (own / whole company); audit log; VI / EN. Company profile, branches, departments; linking users to employees; system parameters; attachments, Excel import / export, search.
+- **VI:** Quên mật khẩu, khóa tài khoản, lịch sử mật khẩu, đăng xuất mọi thiết bị; sao chép vai trò; nhật ký kiểm toán; VI / EN. Thông tin doanh nghiệp, chi nhánh, phòng ban; liên kết người dùng với nhân viên; tham số hệ thống; đính kèm, nhập / xuất Excel, tìm kiếm.
+- **EN:** Forgot password, lockout, password history, sign-out from all devices; role cloning; audit log; VI / EN. Company profile, branches, departments; linking users to employees; system parameters; attachments, Excel import / export, search.
 
 ## 1. Mục tiêu / Objectives
 
@@ -25,14 +25,6 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../
 
 - **VI:** Người dùng nhận liên kết đặt lại mật khẩu qua email; liên kết dùng một lần và hết hạn sau 30 phút. Hệ thống không tiết lộ email có tồn tại hay không.
 - **EN:** Users receive a password-reset link by email; the link is single-use and expires after 30 minutes. The system does not reveal whether an email exists.
-
-**Phân quyền / Authorization**
-
-#### FR-SYS-012 · Phạm vi dữ liệu / Data scope
-`Must` · `P2` (mở rộng / extended: `P7`)
-
-- **VI:** Mỗi quyền có phạm vi dữ liệu: của tôi (chứng từ do mình phụ trách) hoặc toàn công ty. Phạm vi áp dụng cho danh sách, tìm kiếm, báo cáo, xuất dữ liệu và API.
-- **EN:** Each permission has a data scope: own (documents the user is responsible for) or whole company. Scope applies to lists, search, reports, exports and the API.
 
 **Cơ cấu tổ chức / Organization structure**
 
@@ -79,8 +71,8 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../
 #### FR-SYS-027 · Xuất dữ liệu / Data export
 `Must` · `P2`
 
-- **VI:** Mọi danh sách xuất được ra Excel / CSV / PDF theo bộ lọc và cột đang hiển thị, tuân theo phân quyền dữ liệu và quyền theo trường.
-- **EN:** Every list can be exported to Excel / CSV / PDF using the current filters and visible columns, respecting data scope and field-level permissions.
+- **VI:** Mọi danh sách xuất được ra Excel / CSV / PDF theo bộ lọc và cột đang hiển thị; người xuất phải có quyền Xem trên chức năng đó. Phạm vi dữ liệu và quyền theo trường áp dụng từ P7.
+- **EN:** Every list can be exported to Excel / CSV / PDF using the current filters and visible columns; the user needs View on that function. Data scope and field-level permissions apply from P7.
 
 #### FR-SYS-028 · Tìm kiếm & bộ lọc / Search & filters
 `Must` · `P2` (mở rộng / extended: `P8`)

@@ -8,8 +8,8 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../
 
 ## Phạm vi giai đoạn / Phase scope
 
-- **VI:** Xác thực hai lớp, quản lý phiên; phạm vi dữ liệu đầy đủ, quyền theo trường, hạn mức; duyệt một cấp và luồng duyệt nhiều cấp; thông báo.
-- **EN:** MFA, session management; full data scope, field-level permissions, limits; single-level approval and multi-level approval flows; notifications.
+- **VI:** Xác thực hai lớp, quản lý phiên; phạm vi dữ liệu, quyền theo trường, hạn mức; duyệt một cấp và luồng duyệt nhiều cấp; thông báo.
+- **EN:** MFA, session management; data scope, field-level permissions, limits; single-level approval and multi-level approval flows; notifications.
 
 ## 1. Yêu cầu chức năng / Functional requirements
 
@@ -28,6 +28,12 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../
 - **EN:** Users view active sessions (device, IP, time) and can revoke them. The system signs out automatically after 30 minutes of inactivity (configurable).
 
 **Phân quyền / Authorization**
+
+#### FR-SYS-012 · Phạm vi dữ liệu / Data scope
+`Must` · `P7`
+
+- **VI:** Mỗi quyền có phạm vi dữ liệu: của tôi (chứng từ do mình phụ trách), toàn công ty, phòng ban (kể cả phòng ban con), chi nhánh, kho / quỹ được gán. Phạm vi áp dụng cho danh sách, tìm kiếm, báo cáo, xuất dữ liệu và API.
+- **EN:** Each permission has a data scope: own (documents the user is responsible for), whole company, department (including sub-departments), branch, assigned warehouse / cash fund. Scope applies to lists, search, reports, exports and the API.
 
 #### FR-SYS-013 · Quyền theo trường dữ liệu / Field-level permissions
 `Should` · `P7`
@@ -68,7 +74,6 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../
 | Mã / ID | Mở rộng (VI) | Extension (EN) |
 |---|---|---|
 | FR-SYS-004 | Gán chi nhánh, phòng ban, kho và quỹ được truy cập để áp dụng phạm vi dữ liệu (`FR-SYS-012`). | Assign accessible branches, departments, warehouses and cash funds to drive data scope (`FR-SYS-012`). |
-| FR-SYS-012 | Bổ sung phạm vi phòng ban (kể cả phòng ban con), chi nhánh, kho / quỹ được gán. | Add department (including sub-departments), branch and assigned warehouse / cash fund scopes. |
 
 ## 2. Quy tắc nghiệp vụ / Business rules
 

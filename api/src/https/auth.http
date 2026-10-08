@@ -2,8 +2,8 @@ POST http://localhost:5000/api/v1/auth/login
 content-type: application/json
 
 {
-    "email":"admin@localhost.com",
-    "password":"admin"
+    "email":"thong1@localhost.com",
+    "password":"thong123"
 }
 
 #################

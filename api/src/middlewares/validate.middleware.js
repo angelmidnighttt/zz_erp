@@ -1,4 +1,4 @@
-import { error } from "../utils/Response.js";
+import { error } from "../utils/response.js";
 
 const validate = (schemas) => {
   return (req, res, next) => {

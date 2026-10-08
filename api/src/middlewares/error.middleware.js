@@ -1,4 +1,4 @@
-import { error } from "../utils/Response.js";
+import { error } from "../utils/response.js";
 
 //handle error global
 const errorHandler = (err, req, res, next) => {

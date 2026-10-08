@@ -21,8 +21,8 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P2](../
 | Chức năng | Function | Màn hình / nghiệp vụ, ví dụ "Người dùng & vai trò" / Screen or business function, e.g. "Users & roles" |
 | Hành động | Action | Xem / View · Tạo / Create · Sửa / Edit · Xóa / Delete · Duyệt / Approve · Hủy / Cancel · In / Print · Xuất / Export · Nhập / Import |
 
-- **VI:** Chưa làm ở P1: phạm vi dữ liệu (P2); hạn mức, quyền theo trường, phân tách nhiệm vụ (P7).
-- **EN:** Not in P1: data scope (P2); limits, field-level permissions, segregation of duties (P7).
+- **VI:** Chưa làm ở P1: phạm vi dữ liệu, hạn mức, quyền theo trường, phân tách nhiệm vụ (P7).
+- **EN:** Not in P1: data scope, limits, field-level permissions, segregation of duties (P7).
 
 ## 2. Vai trò mặc định / Default roles
 

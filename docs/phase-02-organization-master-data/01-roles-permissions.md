@@ -8,69 +8,70 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P1](../
 
 ## Phạm vi giai đoạn / Phase scope
 
-- **VI:** Phạm vi dữ liệu Của tôi / Toàn công ty; các vai trò nghiệp vụ mặc định; quyền trên cấu hình, nhật ký và danh mục; sao chép vai trò; ghi nhật ký thay đổi phân quyền.
-- **EN:** Own / All data scope; the default business roles; permissions on settings, audit log and master data; role cloning; auditing of permission changes.
+- **VI:** Các vai trò nghiệp vụ mặc định; quyền trên cấu hình, nhật ký và danh mục; sao chép vai trò; ghi nhật ký thay đổi phân quyền.
+- **EN:** The default business roles; permissions on settings, audit log and master data; role cloning; auditing of permission changes.
 
-## 1. Phạm vi dữ liệu / Data scope
+## 1. Kiểm tra quyền / Permission check
 
-- **VI:** Mỗi quyền có thêm phạm vi dữ liệu (`FR-SYS-012`). Giai đoạn này chỉ có hai phạm vi: Của tôi / Own và Toàn công ty / All. Các phạm vi Phòng ban, Chi nhánh, Kho / quỹ được gán bổ sung ở [P7](../phase-07-approvals-controls/01-roles-permissions.md).
-- **EN:** Each permission now carries a data scope (`FR-SYS-012`). This phase only has two scopes: Own and All. The Department, Branch and Assigned warehouse / cash-fund scopes are added in [P7](../phase-07-approvals-controls/01-roles-permissions.md).
+- **VI:** Giữ nguyên mô hình của [P1](../phase-01-foundation/01-roles-permissions.md): chỉ kiểm tra chức năng × hành động theo ma trận mục 3. Chưa có phạm vi dữ liệu: người có quyền Xem trên một chức năng thì thấy toàn bộ dữ liệu của chức năng đó. Phạm vi dữ liệu triển khai ở [P7](../phase-07-approvals-controls/01-roles-permissions.md).
+- **EN:** Keep the [P1](../phase-01-foundation/01-roles-permissions.md) model: only function × action is checked, against the section 3 matrix. There is no data scope yet: a user with View on a function sees all of that function's data. Data scope is delivered in [P7](../phase-07-approvals-controls/01-roles-permissions.md).
 
-| Phạm vi / Scope | Điều kiện lọc (VI) | Filter (EN) |
-|---|---|---|
-| `OWN` | `owner_id` = người dùng hiện tại | `owner_id` = current user |
-| `ALL` | Không lọc (toàn công ty) | No filter (whole company) |
+| Thao tác / Operation | Hành động cần có / Required action |
+|---|---|
+| Xem danh sách, xem chi tiết, tìm kiếm, xuất dữ liệu / List, detail, search, export | `VIEW` |
+| Tạo mới / Create | `CREATE` |
+| Sửa / Edit | `EDIT` |
+| Xóa / Delete | `DELETE` |
 
-| # | Quy tắc tính quyền (VI) | Resolution rule (EN) |
-|---|---|---|
-| 3 | Mỗi vai trò cấp quyền tạo ra một điều kiện lọc theo phạm vi (bảng trên); điều kiện hiệu lực là **OR** của các điều kiện đó. | Each granting role yields one scope filter (table above); the effective filter is the **OR** of those filters. |
-
-- **VI:** Quy tắc 1, 2 xem [P1](../phase-01-foundation/01-roles-permissions.md). Để áp dụng được phạm vi dữ liệu, mọi bảng danh mục có người phụ trách và mọi bảng chứng từ phải có `owner_id` (người phụ trách, mặc định là người tạo), `branch_id`, `department_id`.
-- **EN:** Rules 1 and 2 are in [P1](../phase-01-foundation/01-roles-permissions.md). For data scope to work, every master table with an owner and every document table must carry `owner_id` (the responsible user, defaulting to the creator), `branch_id` and `department_id`.
+- **VI:** Không có quyền tương ứng thì máy chủ từ chối thao tác (HTTP 403); giao diện ẩn hoặc vô hiệu nút đó. Mỗi hành động được kiểm tra độc lập, nên một vai trò có thể chỉ có `V` (chỉ xem), ví dụ `AUD`.
+- **EN:** Without the matching permission the server rejects the operation (HTTP 403); the UI hides or disables that button. Each action is checked on its own, so a role may hold `V` only (read-only), e.g. `AUD`.
 
 ## 2. Vai trò mặc định bổ sung / Additional default roles
 
-| Mã / Code | Vai trò (VI) | Role (EN) | Phạm vi mặc định / Default scope |
-|---|---|---|---|
-| `CEO` | Ban giám đốc | Executive | Toàn công ty / All |
-| `SAL` | Nhân viên kinh doanh | Sales staff | Của tôi / Own |
-| `SLM` | Trưởng phòng kinh doanh | Sales manager | Phòng ban hoặc chi nhánh / Department or branch |
-| `PUR` | Nhân viên mua hàng | Purchasing staff | Phòng ban / Department |
-| `PUM` | Trưởng phòng mua hàng | Purchasing manager | Toàn công ty / All |
-| `WH` | Thủ kho | Warehouse keeper | Kho được gán / Assigned warehouses |
-| `WHM` | Quản lý kho | Warehouse manager | Chi nhánh / Branch |
-| `ACC` | Kế toán viên | Accountant | Toàn công ty / All |
-| `CAC` | Kế toán trưởng | Chief accountant | Toàn công ty / All |
-| `CSH` | Thủ quỹ | Cashier | Quỹ được gán / Assigned cash funds |
-| `AUD` | Kiểm soát / Kiểm toán (chỉ xem) | Auditor (read-only) | Toàn công ty / All |
+| Mã / Code | Vai trò (VI) | Role (EN) |
+|---|---|---|
+| `CEO` | Ban giám đốc | Executive |
+| `SAL` | Nhân viên kinh doanh | Sales staff |
+| `SLM` | Trưởng phòng kinh doanh | Sales manager |
+| `PUR` | Nhân viên mua hàng | Purchasing staff |
+| `PUM` | Trưởng phòng mua hàng | Purchasing manager |
+| `WH` | Thủ kho | Warehouse keeper |
+| `WHM` | Quản lý kho | Warehouse manager |
+| `ACC` | Kế toán viên | Accountant |
+| `CAC` | Kế toán trưởng | Chief accountant |
+| `CSH` | Thủ quỹ | Cashier |
+| `AUD` | Kiểm soát / Kiểm toán (chỉ xem) | Auditor (read-only) |
 
-- **VI:** `ADM` (từ P1) có phạm vi mặc định Toàn công ty (chỉ cấu hình). Các vai trò có phạm vi mặc định là phòng ban, chi nhánh hoặc kho / quỹ được gán dùng Toàn công ty cho đến P7.
-- **EN:** `ADM` (from P1) has the default scope All (configuration only). Roles whose default scope is department, branch or assigned warehouses / cash funds use All until P7.
+- **VI:** `ADM` (từ P1) chỉ có quyền cấu hình (`BR-ROL-005`).
+- **EN:** `ADM` (from P1) has configuration rights only (`BR-ROL-005`).
 
 ## 3. Ma trận phân quyền mặc định / Default permission matrix
 
-Ký hiệu / Legend: `V` Xem / View · `C` Tạo / Create · `E` Sửa / Edit · `D` Xóa / Delete · `A` Duyệt / Approve · `—` Không / None
+Ký hiệu / Legend: `V` Xem / View · `C` Tạo / Create · `E` Sửa / Edit · `D` Xóa / Delete · `—` Không / None
 
 | Chức năng / Function | Mã / Code | ADM | CEO | SAL | SLM | PUR | PUM | WH | WHM | ACC | CAC | CSH | AUD |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Người dùng & vai trò / Users & roles (từ P1 / from P1) | `SYS.USER_ROLE` | VCED | — | — | — | — | — | — | — | — | — | — | V |
 | Cấu hình hệ thống / System settings | `SYS.SETTINGS` | VCE | V | — | — | — | — | — | — | — | V | — | V |
 | Nhật ký hệ thống / Audit log | `SYS.AUDIT_LOG` | V | V | — | — | — | — | — | — | — | V | — | V |
-| Sản phẩm / Products | `MDM.PRODUCT` | V | V | V | V | VCE | VCEA | V | VCE | V | VE | — | V |
-| Khách hàng / Customers | `MDM.CUSTOMER` | — | V | VCE | VCEA | — | — | — | — | V | VE | V | V |
-| Nhà cung cấp / Suppliers | `MDM.SUPPLIER` | — | V | — | — | VCE | VCEA | — | — | V | VE | V | V |
-| Bảng giá bán / Price lists | `MDM.PRICE_LIST` | — | VA | V | VCE | — | — | — | — | V | V | — | V |
+| Sản phẩm / Products | `MDM.PRODUCT` | V | V | V | V | VCE | VCE | V | VCE | V | VE | — | V |
+| Khách hàng / Customers | `MDM.CUSTOMER` | — | V | VCE | VCE | — | — | — | — | V | VE | V | V |
+| Nhà cung cấp / Suppliers | `MDM.SUPPLIER` | — | V | — | — | VCE | VCE | — | — | V | VE | V | V |
+| Bảng giá bán / Price lists | `MDM.PRICE_LIST` | — | V | V | VCE | — | — | — | — | V | V | — | V |
 
-- **VI:** Ma trận là cấu hình mặc định khi khởi tạo; quản trị viên có thể thay đổi. Ô có `A` chỉ có tác dụng từ khi có luồng duyệt (P7).
-- **EN:** The matrix is the initial default configuration; administrators can change it. Cells with `A` only take effect once approval flows exist (P7).
+- **VI:** Ma trận là cấu hình mặc định khi khởi tạo; quản trị viên có thể thay đổi. Quyền Duyệt trên danh mục được cấp ở [P7](../phase-07-approvals-controls/01-roles-permissions.md) cùng luồng duyệt.
+- **EN:** The matrix is the initial default configuration; administrators can change it. Approve rights on master data are granted in [P7](../phase-07-approvals-controls/01-roles-permissions.md) together with approval flows.
 
 Ví dụ / Example — ô `SAL` × Khách hàng = `VCE` trở thành 3 dòng `role_permissions` / becomes 3 `role_permissions` rows:
 
-| role | function_code | action | data_scope |
-|---|---|---|---|
-| `SAL` | `MDM.CUSTOMER` | `VIEW` | `NULL` → `OWN` |
-| `SAL` | `MDM.CUSTOMER` | `CREATE` | `NULL` → `OWN` |
-| `SAL` | `MDM.CUSTOMER` | `EDIT` | `NULL` → `OWN` |
+| role | function_code | action |
+|---|---|---|
+| `SAL` | `MDM.CUSTOMER` | `VIEW` |
+| `SAL` | `MDM.CUSTOMER` | `CREATE` |
+| `SAL` | `MDM.CUSTOMER` | `EDIT` |
+
+- **VI:** `SAL` không có dòng `DELETE` trên `MDM.CUSTOMER`, nên yêu cầu xóa khách hàng của `SAL` bị từ chối.
+- **EN:** `SAL` has no `DELETE` row on `MDM.CUSTOMER`, so a delete-customer request from `SAL` is rejected.
 
 ## 4. Quy tắc nghiệp vụ / Business rules
 
@@ -83,8 +84,8 @@ Ví dụ / Example — ô `SAL` × Khách hàng = `VCE` trở thành 3 dòng `ro
 #### BR-ROL-006 · Thay đổi phân quyền được ghi nhật ký / Permission changes are audited
 `Must` · `P2`
 
-- **VI:** Mọi thay đổi vai trò, quyền, phạm vi dữ liệu đều được ghi vào nhật ký kiểm toán (người thực hiện, thời điểm, giá trị trước – sau).
-- **EN:** Every change to roles, permissions or data scope is written to the audit log (actor, timestamp, before/after values).
+- **VI:** Mọi thay đổi vai trò, quyền và việc gán vai trò cho người dùng đều được ghi vào nhật ký kiểm toán (người thực hiện, thời điểm, giá trị trước – sau).
+- **EN:** Every change to roles, permissions and user role assignments is written to the audit log (actor, timestamp, before/after values).
 
 | Quy tắc / Rule | Cơ chế (VI) | Mechanism (EN) |
 |---|---|---|
@@ -95,24 +96,15 @@ Ví dụ / Example — ô `SAL` × Khách hàng = `VCE` trở thành 3 dòng `ro
 
 | Thay đổi / Change | Mục đích (VI) | Purpose (EN) |
 |---|---|---|
-| `roles.default_data_scope` | Phạm vi mặc định của vai trò. | The role's default scope. |
 | `roles.cloned_from_id` | Vai trò được sao chép từ vai trò nào (`FR-SYS-011`). | Which role this one was cloned from (`FR-SYS-011`). |
-| `role_permissions.data_scope` | Phạm vi riêng của một ô quyền; để trống thì dùng phạm vi mặc định của vai trò. | Scope of one permission cell; empty falls back to the role's default scope. |
 | `audit_logs` | Nhật ký kiểm toán dùng chung, chỉ ghi thêm (`FR-SYS-029`). | Shared, append-only audit log (`FR-SYS-029`). |
 
 <details>
 <summary>Xem DDL / Show DDL</summary>
 
 ```sql
--- Giá trị DEPARTMENT, BRANCH, ASSIGNED được thêm ở P7 / DEPARTMENT, BRANCH, ASSIGNED are added in P7
-CREATE TYPE data_scope AS ENUM ('OWN','ALL');
-
 ALTER TABLE roles
-  ADD COLUMN default_data_scope data_scope NOT NULL DEFAULT 'ALL',
-  ADD COLUMN cloned_from_id     uuid REFERENCES roles(id);
-
-ALTER TABLE role_permissions
-  ADD COLUMN data_scope data_scope;  -- NULL = roles.default_data_scope
+  ADD COLUMN cloned_from_id uuid REFERENCES roles(id);
 
 -- Chỉ ghi thêm: thu hồi UPDATE/DELETE của tài khoản ứng dụng; nên phân vùng theo tháng
 -- Append-only: revoke UPDATE/DELETE from the app account; consider monthly partitioning

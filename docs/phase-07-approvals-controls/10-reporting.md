@@ -17,4 +17,4 @@ Các giai đoạn khác của phân hệ / Other phases of this module: [P3](../
 
 | Mã / ID | Mở rộng (VI) | Extension (EN) |
 |---|---|---|
-| FR-RPT-006 | Dữ liệu trong báo cáo tuân theo quyền theo trường (`FR-SYS-013`). | Report data respects field-level permissions (`FR-SYS-013`). |
+| FR-RPT-006 | Dữ liệu trong báo cáo tuân theo phạm vi dữ liệu (`FR-SYS-012`) và quyền theo trường (`FR-SYS-013`). | Report data respects data scope (`FR-SYS-012`) and field-level permissions (`FR-SYS-013`). |
