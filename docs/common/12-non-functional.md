@@ -120,7 +120,7 @@
 | Thành phần (VI) | Component (EN) | Công nghệ / Technology | Trạng thái / Status |
 |---|---|---|---|
 | Backend / API | Backend / API | Node.js 22, Express 5, JavaScript (ES modules); kiểm tra đầu vào bằng Zod, JWT / input validation with Zod, JWT | Đã chốt / Chosen |
-| Frontend | Frontend | Next.js (App Router, JavaScript), Tailwind CSS v4; i18n VI/EN tự viết bằng từ điển + `Intl`, không dùng thư viện UI / in-house i18n with dictionaries + `Intl`, no UI library | Đã chốt / Chosen |
+| Frontend | Frontend | Next.js (App Router, TypeScript), Tailwind CSS v4; i18n VI/EN tự viết bằng từ điển + `Intl`, không dùng thư viện UI / in-house i18n with dictionaries + `Intl`, no UI library | Đã chốt / Chosen |
 | Cơ sở dữ liệu | Database | PostgreSQL 17 | Đã chốt / Chosen |
 | Truy vấn & migration | Query builder & migrations | Knex (migrations và seed có phiên bản / versioned migrations and seeds) | Đã chốt / Chosen |
 | Kiểm thử | Testing | `node:test` có sẵn của Node.js / Node.js built-in `node:test` | Đã chốt / Chosen |

@@ -39,3 +39,10 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+      # --if-present: api chưa có script lint/build
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: Build
+        run: npm run build --if-present
