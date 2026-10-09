@@ -2,6 +2,7 @@
 import express from "express";
 import compression from "compression";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 import helmet from "helmet";
 import morgan from "morgan";
@@ -23,6 +24,7 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
 
 //routes
 app.use("/api/v1", route);

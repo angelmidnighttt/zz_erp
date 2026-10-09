@@ -54,6 +54,26 @@ class AuthRepo {
         "rp.action",
       );
   }
+
+  async createRefreshToken({ userId, tokenHash, expiresAt }) {
+    const [token] = await db("refresh_tokens")
+      .insert({ user_id: userId, token_hash: tokenHash, expires_at: expiresAt })
+      .returning(["id"]);
+    return token;
+  }
+
+  // Thu hoi token con hieu luc. Tra ve undefined neu token khong ton tai, da bi thu hoi hoac het han.
+  // 1 cau update co dieu kien nen 2 request dung cung 1 token thi chi 1 request thanh cong
+  async revokeRefreshToken({ tokenHash, replacedById = null }) {
+    const now = new Date();
+    const [token] = await db("refresh_tokens")
+      .where({ token_hash: tokenHash })
+      .whereNull("revoked_at")
+      .where("expires_at", ">", now)
+      .update({ revoked_at: now, replaced_by_id: replacedById, updated_at: now })
+      .returning(["id", "user_id"]);
+    return token;
+  }
 }
 
 export default new AuthRepo();

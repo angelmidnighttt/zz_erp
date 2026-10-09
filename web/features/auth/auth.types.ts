@@ -6,7 +6,7 @@ export type LoginBody = { email: string; password: string };
 export type LoginResult = {
   id: string;
   email: string;
-  token: { accessToken: string; refreshToken: string };
+  token: { accessToken: string }; // refreshToken nằm trong cookie httpOnly
 };
 
 export type CreateUserBody = { email: string; username: string; fullName: string; password: string };

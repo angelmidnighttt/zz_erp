@@ -5,7 +5,7 @@ import AuthRepo from "../../../src/modules/auth/auth.repo.js";
 import authService from "../../../src/modules/auth/auth.service.js";
 import ApiError from "../../../src/shared/utils/ApiError.js";
 import { hashPassword, comparePassword } from "../../../src/shared/utils/password.js";
-import { verifyAccessToken } from "../../../src/shared/utils/jwt.js";
+import { verifyAccessToken, hashToken } from "../../../src/shared/utils/jwt.js";
 import transaction from "../../../src/shared/db/transaction.js";
 import eventBus from "../../../src/shared/events/event-bus.js";
 import { AUTH_EVENTS } from "../../../src/modules/auth/auth.events.js";
@@ -55,6 +55,9 @@ describe("AuthService.login", () => {
       password_hash: passwordHash,
     }));
     const updateLastLogin = mock.method(AuthRepo, "updateLastLogin", async () => {});
+    const createRefreshToken = mock.method(AuthRepo, "createRefreshToken", async () => ({
+      id: "token-id",
+    }));
 
     const result = await authService.login({
       email: "a@localhost.com",
@@ -67,7 +70,27 @@ describe("AuthService.login", () => {
     assert.deepEqual(updateLastLogin.mock.calls[0].arguments, [{ userId: USER_ID }]);
     assert.equal(result.id, USER_ID);
     assert.equal(verifyAccessToken(result.token.accessToken).id, USER_ID);
-    assert.ok(result.token.refreshToken);
+    // DB chi luu hash, khong luu token goc
+    const [saved] = createRefreshToken.mock.calls[0].arguments;
+    assert.equal(saved.userId, USER_ID);
+    assert.equal(saved.tokenHash, hashToken(result.token.refreshToken));
+  });
+
+  it("throws 403 when the account is locked", async () => {
+    const passwordHash = await hashPassword("secret123");
+    mock.method(AuthRepo, "getUserByEmail", async () => ({
+      id: USER_ID,
+      email: "a@localhost.com",
+      password_hash: passwordHash,
+      is_locked: true,
+    }));
+    const createRefreshToken = mock.method(AuthRepo, "createRefreshToken", async () => ({}));
+
+    await assert.rejects(
+      authService.login({ email: "a@localhost.com", password: "secret123" }),
+      (err) => err instanceof ApiError && err.statusCode === 403,
+    );
+    assert.equal(createRefreshToken.mock.callCount(), 0);
   });
 });
 

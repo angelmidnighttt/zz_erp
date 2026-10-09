@@ -49,4 +49,8 @@ route.get(
   asyncHandler(AuthController.getMe),
 );
 
+// Khong qua authenticate: access token luc nay thuong da het han, xac thuc bang cookie refreshToken
+route.post("/refresh", asyncHandler(AuthController.refreshToken));
+route.post("/logout", asyncHandler(AuthController.logout));
+
 export default route;

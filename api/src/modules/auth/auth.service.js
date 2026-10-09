@@ -5,11 +5,25 @@ import transaction from "../../shared/db/transaction.js";
 import eventBus from "../../shared/events/event-bus.js";
 import ApiError from "../../shared/utils/ApiError.js";
 import {
+  REFRESH_TOKEN_TTL_MS,
   createAccessToken,
   createRefreshToken,
+  verifyRefreshToken,
+  hashToken,
 } from "../../shared/utils/jwt.js";
 
 class AuthService {
+  // Tao refresh token va luu hash vao DB; id dung de noi token cu -> token moi khi rotate
+  async #saveRefreshToken(user) {
+    const refreshToken = createRefreshToken(user);
+    const { id } = await AuthRepo.createRefreshToken({
+      userId: user.id,
+      tokenHash: hashToken(refreshToken),
+      expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
+    });
+    return { id, refreshToken };
+  }
+
   async login({ email, password }) {
     const existedUser = await AuthRepo.getUserByEmail({ email });
     // khong tim thay 1 phan tu se tra ve 404, nhung neu gia tri tra ve la 1 array nhung khong co phan tu nao thi van tra ve 200 va array null
@@ -21,14 +35,16 @@ class AuthService {
     );
     if (!isValidPassword)
       throw new ApiError(401, "Invalid username or password");
+    if (existedUser.is_locked) throw new ApiError(403, "Account is locked");
 
     await AuthRepo.updateLastLogin({ userId: existedUser.id });
+    const { refreshToken } = await this.#saveRefreshToken(existedUser);
     return {
       id: existedUser.id,
       email: existedUser.email,
       token: {
         accessToken: createAccessToken(existedUser),
-        refreshToken: createRefreshToken(existedUser),
+        refreshToken,
       },
     };
   }
@@ -85,6 +101,42 @@ class AuthService {
       }, {}),
     );
     return dataUser;
+  }
+
+  // Rotation: moi lan refresh thu hoi token cu va cap token moi
+  async refreshToken({ refreshToken }) {
+    if (!refreshToken) throw new ApiError(401, "Missing refresh token");
+
+    let payload;
+    try {
+      payload = verifyRefreshToken(refreshToken);
+    } catch {
+      throw new ApiError(401, "Invalid refresh token");
+    }
+
+    const user = await AuthRepo.getUserById({ userId: payload.id });
+    if (!user || user.is_locked)
+      throw new ApiError(401, "Invalid refresh token");
+
+    return transaction.run(async () => {
+      const newToken = await this.#saveRefreshToken(user);
+      // token cu da bi thu hoi / het han thi throw -> rollback luon token moi vua tao
+      const revoked = await AuthRepo.revokeRefreshToken({
+        tokenHash: hashToken(refreshToken),
+        replacedById: newToken.id,
+      });
+      if (!revoked) throw new ApiError(401, "Invalid refresh token");
+
+      return {
+        accessToken: createAccessToken(user),
+        refreshToken: newToken.refreshToken,
+      };
+    });
+  }
+
+  async logout({ refreshToken }) {
+    if (!refreshToken) return;
+    await AuthRepo.revokeRefreshToken({ tokenHash: hashToken(refreshToken) });
   }
 }
 export default new AuthService();

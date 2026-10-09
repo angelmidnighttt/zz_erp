@@ -40,3 +40,10 @@ GET {{baseUrl}}/auth/me
 content-type: application/json
 Authorization: Bearer {{token}}
 
+
+#################
+# cookie refreshToken lay tu response login o tren (REST Client tu nho cookie)
+POST {{baseUrl}}/auth/refresh
+
+#################
+POST {{baseUrl}}/auth/logout
