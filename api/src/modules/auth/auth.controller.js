@@ -25,6 +25,11 @@ class AuthController {
     });
     return res.status(200).json(success(userRoles));
   }
+
+  async getMe(req, res) {
+    const user = await authService.getMe({ userId: req.user.id });
+    return res.status(200).json(success(user));
+  }
 }
 
 export default new AuthController();

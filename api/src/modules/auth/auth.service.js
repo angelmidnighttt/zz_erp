@@ -4,7 +4,10 @@ import { hashPassword, comparePassword } from "../../shared/utils/password.js";
 import transaction from "../../shared/db/transaction.js";
 import eventBus from "../../shared/events/event-bus.js";
 import ApiError from "../../shared/utils/ApiError.js";
-import { createAccessToken, createRefreshToken } from "../../shared/utils/jwt.js";
+import {
+  createAccessToken,
+  createRefreshToken,
+} from "../../shared/utils/jwt.js";
 
 class AuthService {
   async login({ email, password }) {
@@ -60,6 +63,28 @@ class AuthService {
       return userRoles;
     });
   }
-}
 
+  async getMe({ userId }) {
+    console.log(userId);
+    const rows = await AuthRepo.getPerrmissionsByUserId({ userId });
+    const dataUser = Object.values(
+      rows.reduce((acc, row) => {
+        if (!acc[row.id]) {
+          acc[row.id] = {
+            id: row.id,
+            email: row.email,
+            full_name: row.full_name,
+            permissions: [],
+          };
+        }
+        acc[row.id].permissions.push({
+          function_code: row.function_code,
+          action: row.action,
+        });
+        return acc;
+      }, {}),
+    );
+    return dataUser;
+  }
+}
 export default new AuthService();

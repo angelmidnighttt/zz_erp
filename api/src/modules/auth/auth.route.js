@@ -43,4 +43,10 @@ route.post(
   asyncHandler(AuthController.assignRoles),
 );
 
+route.get(
+  "/me",
+  authenticate,
+  asyncHandler(AuthController.getMe),
+);
+
 export default route;

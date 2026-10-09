@@ -40,6 +40,20 @@ class AuthRepo {
       .ignore()
       .returning(["user_id", "role_id"]);
   }
+
+  async getPerrmissionsByUserId({ userId }) {
+    return db("users as u")
+      .join("user_roles as ur", "u.id", "ur.user_id")
+      .join("role_permissions as rp", "ur.role_id", "rp.role_id")
+      .where({ "u.id": userId })
+      .select(
+        "u.id",
+        "u.email",
+        "u.full_name",
+        "rp.function_code",
+        "rp.action",
+      );
+  }
 }
 
 export default new AuthRepo();

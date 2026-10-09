@@ -1,12 +1,12 @@
 @baseUrl = http://localhost:5000/api/v1
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImYyZjljMmM0LTRjN2EtMTFlYy1iZjdiLTAyNDJhYzEyMDAwMiIsImVtYWlsIjoiYWRtaW5AbG9jYWxob3N0LmNvbSIsImlhdCI6MTc5MTQzNDUzMSwiZXhwIjoxNzkxNDM1NDMxfQ.Oyseerwti3IgnCRj16JfQUIqa401TfpLWUNEGho4_dc
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImYyZjljMmM0LTRjN2EtMTFlYy1iZjdiLTAyNDJhYzEyMDAwMiIsImVtYWlsIjoiYWRtaW5AbG9jYWxob3N0LmNvbSIsImlhdCI6MTc5MTUyNzY2MywiZXhwIjoxNzkxNTI4NTYzfQ.h0qU_uh0P7TkxF0iDRUpw7jW14LnD4MuAD8Yce1Vju0
 
 POST {{baseUrl}}/auth/login
 content-type: application/json
 
 {
-    "email":"thong2@localhost.com",
-    "password":"thong123"
+    "email":"admin@localhost.com",
+    "password":"admin"
 }
 
 #################
@@ -34,3 +34,9 @@ Authorization: Bearer {{token}}
 {
    "rolesId":["ba06a758-ffac-4287-91e1-b2f2601dde84"]
 }
+
+#################
+GET {{baseUrl}}/auth/me
+content-type: application/json
+Authorization: Bearer {{token}}
+

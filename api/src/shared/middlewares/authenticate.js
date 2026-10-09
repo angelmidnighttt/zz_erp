@@ -7,6 +7,7 @@ export const authenticate = (req, res, next) => {
 
   try {
     req.user = verifyAccessToken(token);
+    console.log("req.user", req.user);
   } catch {
     throw new ApiError(401, "Unauthorized");
   }
