@@ -112,21 +112,22 @@
 | NFR-OBS-002 | Giám sát chỉ số (thời gian phản hồi, tỷ lệ lỗi, tài nguyên) và cảnh báo tự động khi vượt ngưỡng. | Monitor metrics (latency, error rate, resources) with automatic alerts on threshold breaches. | Must · P6 |
 | NFR-OBS-003 | Endpoint kiểm tra sức khỏe (health check) cho ứng dụng và các phụ thuộc. | Health-check endpoints for the application and its dependencies. | Must |
 
-## 11. Công nghệ đề xuất / Proposed technology (TEC)
+## 11. Công nghệ / Technology (TEC)
 
-> Đề xuất dựa trên bộ khung ERP hiện có (NestJS + React + PostgreSQL); có thể điều chỉnh khi thiết kế kiến trúc.
-> Proposal based on the existing ERP starter (NestJS + React + PostgreSQL); may change during architecture design.
+> Các thành phần **Đã chốt** đang được dùng trong mã nguồn; các thành phần **Đề xuất** được chốt khi đến giai đoạn cần dùng. Hạn chế thư viện bên thứ ba: chỉ thêm khi Node.js, trình duyệt hoặc Next.js không đáp ứng được.
+> **Chosen** components are in use in the codebase; **Proposed** components are confirmed in the phase that first needs them. Keep third-party libraries to a minimum: add one only when Node.js, the browser or Next.js cannot cover the need.
 
-| Thành phần (VI) | Component (EN) | Đề xuất / Proposal |
-|---|---|---|
-| Backend / API | Backend / API | NestJS (Node.js 18, JavaScript) |
-| Frontend | Frontend | React (Vite, JavaScript), Tailwind CSS, i18n VI/EN |
-| Cơ sở dữ liệu | Database | PostgreSQL 16 |
-| ORM & migration | ORM & migrations | TypeORM (migrations có phiên bản / versioned migrations) |
-| Hàng đợi & cache | Queue & cache | Redis + BullMQ (từ P7, khi có thông báo và tích hợp bất đồng bộ / from P7, with notifications and asynchronous integrations) |
-| Lưu trữ tệp | File storage | Object storage tương thích S3 / S3-compatible (MinIO hoặc dịch vụ cloud / or a cloud service) |
-| Đóng gói & triển khai | Packaging & deployment | Docker, CI/CD (ví dụ GitHub Actions / e.g. GitHub Actions) |
-| Giám sát | Monitoring | OpenTelemetry, Prometheus / Grafana hoặc tương đương / or equivalent |
+| Thành phần (VI) | Component (EN) | Công nghệ / Technology | Trạng thái / Status |
+|---|---|---|---|
+| Backend / API | Backend / API | Node.js 22, Express 5, JavaScript (ES modules); kiểm tra đầu vào bằng Zod, JWT / input validation with Zod, JWT | Đã chốt / Chosen |
+| Frontend | Frontend | Next.js (App Router, JavaScript), Tailwind CSS v4; i18n VI/EN tự viết bằng từ điển + `Intl`, không dùng thư viện UI / in-house i18n with dictionaries + `Intl`, no UI library | Đã chốt / Chosen |
+| Cơ sở dữ liệu | Database | PostgreSQL 17 | Đã chốt / Chosen |
+| Truy vấn & migration | Query builder & migrations | Knex (migrations và seed có phiên bản / versioned migrations and seeds) | Đã chốt / Chosen |
+| Kiểm thử | Testing | `node:test` có sẵn của Node.js / Node.js built-in `node:test` | Đã chốt / Chosen |
+| Hàng đợi & cache | Queue & cache | Redis + BullMQ (từ P7, khi có thông báo và tích hợp bất đồng bộ / from P7, with notifications and asynchronous integrations) | Đề xuất / Proposed |
+| Lưu trữ tệp | File storage | Object storage tương thích S3 / S3-compatible (MinIO hoặc dịch vụ cloud / or a cloud service) | Đề xuất / Proposed |
+| Đóng gói & triển khai | Packaging & deployment | Docker, CI/CD bằng GitHub Actions / CI/CD on GitHub Actions | Đã chốt / Chosen |
+| Giám sát | Monitoring | OpenTelemetry, Prometheus / Grafana hoặc tương đương / or equivalent | Đề xuất / Proposed |
 
 ## 12. Hỗ trợ & tài liệu / Support & documentation (SUP)
 
