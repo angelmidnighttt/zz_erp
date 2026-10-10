@@ -1,5 +1,5 @@
 @baseUrl = http://localhost:5000/api/v1
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImYyZjljMmM0LTRjN2EtMTFlYy1iZjdiLTAyNDJhYzEyMDAwMiIsImVtYWlsIjoiYWRtaW5AbG9jYWxob3N0LmNvbSIsImlhdCI6MTc5MTUyNzY2MywiZXhwIjoxNzkxNTI4NTYzfQ.h0qU_uh0P7TkxF0iDRUpw7jW14LnD4MuAD8Yce1Vju0
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImYyZjljMmM0LTRjN2EtMTFlYy1iZjdiLTAyNDJhYzEyMDAwMiIsImVtYWlsIjoiYWRtaW5AbG9jYWxob3N0LmNvbSIsImlhdCI6MTc5MTY0NzI3MiwiZXhwIjoxNzkxNjQ4MTcyfQ.wbn7vwXZx0i5Ko-SANgh_iJqEOtAuKtulBeIjQQxtlI
 
 POST {{baseUrl}}/auth/login
 content-type: application/json
@@ -47,3 +47,7 @@ POST {{baseUrl}}/auth/refresh
 
 #################
 POST {{baseUrl}}/auth/logout
+
+##############
+GET {{baseUrl}}/auth/users
+Authorization: Bearer {{token}}

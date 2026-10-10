@@ -24,4 +24,11 @@ const assignRolesDto = z.object({
     .transform((rolesId) => [...new Set(rolesId)]),
 });
 
-export { loginUserDto, createUserDto, userIdParamDto, assignRolesDto };
+const getUsersDto = z.object({
+  search: z.string().optional(),
+  sort: z.enum(["email", "username", "full_name"]).default("email"),
+  page: z.number().min(1).default(1),
+  pageSize: z.number().min(1).max(100).default(20),
+});
+
+export { loginUserDto, createUserDto, userIdParamDto, assignRolesDto,getUsersDto };

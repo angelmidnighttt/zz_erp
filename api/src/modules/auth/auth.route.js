@@ -7,6 +7,7 @@ import {
   loginUserDto,
   userIdParamDto,
   assignRolesDto,
+  getUsersDto,
 } from "./auth.dto.js";
 import { authenticate } from "../../shared/middlewares/authenticate.js";
 import { requirePermission } from "../../shared/middlewares/requirePermission.js";
@@ -52,5 +53,7 @@ route.get(
 // Khong qua authenticate: access token luc nay thuong da het han, xac thuc bang cookie refreshToken
 route.post("/refresh", asyncHandler(AuthController.refreshToken));
 route.post("/logout", asyncHandler(AuthController.logout));
+
+route.get("/users",authenticate,requirePermission(FUNCTIONS.USER_ROLE, ACTIONS.V),validate({ query: getUsersDto }), asyncHandler(AuthController.getUsers));
 
 export default route;

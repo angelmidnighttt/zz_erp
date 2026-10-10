@@ -1,6 +1,7 @@
 //minh se apply dependency injection o 1 project khac, project nay tam thoi code vay
 // db() tu dung transaction dang chay (neu co), nen repo khong can nhan trx
 import { db } from "../../shared/db/transaction.js";
+import { applySort, whereSearch, paginate } from "../../shared/db/list.js";
 
 class AuthRepo {
   async getUserById({ userId }) {
@@ -70,9 +71,31 @@ class AuthRepo {
       .where({ token_hash: tokenHash })
       .whereNull("revoked_at")
       .where("expires_at", ">", now)
-      .update({ revoked_at: now, replaced_by_id: replacedById, updated_at: now })
+      .update({
+        revoked_at: now,
+        replaced_by_id: replacedById,
+        updated_at: now,
+      })
       .returning(["id", "user_id"]);
     return token;
+  }
+
+  async getUsers({ search = "", sort = "email", page = 1, pageSize = 20 }) {
+    const qb = db("users").select(
+      "id",
+      "email",
+      "username",
+      "full_name",
+      "created_at",
+    );
+    whereSearch(qb, search, ["email", "username", "full_name"]);
+    applySort(
+      qb,
+      sort,
+      ["email", "username", "full_name", "created_at"],
+      "email",
+    );
+    return paginate(qb, { page, pageSize });
   }
 }
 

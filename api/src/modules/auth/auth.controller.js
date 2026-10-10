@@ -63,6 +63,17 @@ class AuthController {
     res.clearCookie(REFRESH_COOKIE, refreshCookieOptions);
     return res.status(200).json(success(null));
   }
+
+  //ec chua lam paginate
+  async getUsers(req, res) {
+    const users = await authService.getUsers({
+      search:req.validated.query.search,
+      sort: req.validated.query.sort,
+      page: req.validated.query.page,
+      pageSize: req.validated.query.pageSize,
+    });
+    return res.status(200).json(success(users));
+  }
 }
 
 export default new AuthController();

@@ -138,5 +138,9 @@ class AuthService {
     if (!refreshToken) return;
     await AuthRepo.revokeRefreshToken({ tokenHash: hashToken(refreshToken) });
   }
+
+  async getUsers({ search, sort, page, pageSize }) {
+    return AuthRepo.getUsers({search, sort, page, pageSize });
+  }
 }
 export default new AuthService();
