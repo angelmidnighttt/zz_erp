@@ -33,3 +33,4 @@ export const requestLogger = (req, res, next) => {
 
 // cac ban lay source ve run check lai cung duoc, khong can code may cai du thua nay, may nay bao AI config cai la xong, ton thoi gian qua huhu :v
 // nen lam luon cai log cho query slow, hay alert vao slack hay gui mail cho nay luon nhi
+//ua nham, nay la log service, con cai log trong application cua minh la khac nha, kieu log de luu lai audit cua tung giao dich ay, user nao thay doi gi, user nao xoa cai gi ay
