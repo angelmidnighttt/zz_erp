@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node --test \"test/**/*.test.js\"",
-    "dev": "nodemon index.js",
+    "dev": "nodemon index.js | pino-pretty --translateTime SYS:HH:MM:ss --ignore pid,hostname,service,env",
     "start": "node index.js",
     "migrate:make": "knex migrate:make",
     "migrate": "knex migrate:latest",
@@ -24,11 +24,12 @@
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "knex": "^3.3.0",
-    "morgan": "^1.12.1",
     "pg": "^8.23.1",
+    "pino": "^10.4.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "pino-pretty": "^13.2.0"
   }
 }

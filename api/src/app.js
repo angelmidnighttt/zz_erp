@@ -5,15 +5,16 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 
 import helmet from "helmet";
-import morgan from "morgan";
 import route from "./modules/index.js";
 import notFound from "./shared/middlewares/notfound.middleware.js";
 import errorHandler from "./shared/middlewares/error.middleware.js";
+import {requestLogger} from "./shared/middlewares/request-logger.js";
 
 const app = express();
 
 //middlewares
-app.use(morgan("dev"));
+//de no o dau tien luon nha ae
+app.use(requestLogger);
 app.use(helmet());
 app.use(compression());
 app.use(

@@ -74,6 +74,14 @@ class AuthController {
     });
     return res.status(200).json(success(users));
   }
+
+  // lam them update, lock/unlock user
+
+  // add, update, delete roles
+
+  // chac build log truoc da, haizz
+  // log tren dev van cho ra log bth, con production se luu json, dung tam lib pino cho khoe vay
+  
 }
 
 export default new AuthController();

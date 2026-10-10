@@ -1,3 +1,4 @@
+import { requestContext } from "../logger/request-context.js";
 import ApiError from "../utils/ApiError.js";
 import { verifyAccessToken } from "../utils/jwt.js";
 
@@ -11,5 +12,9 @@ export const authenticate = (req, res, next) => {
   } catch {
     throw new ApiError(401, "Unauthorized");
   }
+
+  // luu vao request context
+  const context = requestContext.getStore();
+  if (context) context.userId = req.user.id;
   next();
 };
